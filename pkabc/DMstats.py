@@ -1,4 +1,4 @@
-from numpy import np
+import numpy as np
 from universe import Universe
 from scipy.integrate import quad as inty
 from scipy.fftpack import
@@ -33,7 +33,7 @@ class Matter(Universe):
 
     def _D1int(self, a, Om, OL):
 
-
+        return (a * self.E(a, var='a')) ** (-3)
 
 
     def D1(self, z):
@@ -41,6 +41,7 @@ class Matter(Universe):
         a = 1. / (1 + z)
 
         return self.E(z) * inty(self._D1int, 0.5, a, args=(self.Om, self.OL))[0]
+
 
     def growthfac(self, z):
 
@@ -73,6 +74,18 @@ class Matter(Universe):
     def sig(self, R):
 
         return np.sqrt(inty(self._sigint, self.klo, self.khi, args=(R,))[0])
+
+
+    def rho_crit(z)
+        """
+        Compute critical density of the universe at a given redshift:
+        p_c = 3 * H^2(z) / (8 * pi * G)
+        and convert to units of solar mass per cubic megaparsec
+        """
+        Hsq = (100 * self.h * self.E(z)) ** 2
+        rhoc = 27746.677665951076 * Hsq  # using G = 4.302e-6 Mpc Msun^-1 (km/s)^2
+        return
+
 
     def rho_bar(z):
         pass

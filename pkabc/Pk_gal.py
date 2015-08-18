@@ -1,18 +1,25 @@
-from numpy import np
-from universe import Universe
+import numpy as np
+from scipy.integrate import quad as inty
+from hod import N_cen, N_sat
+from DMstats import Matter
 
 
-class Pwspec(Universe):
+class Pwspec(Matter):
 
 
     def _nbar_func(self, m, z):
 
-        return self.hmf(m, z) * (self.N_cen(m) + self.N_sat(m))
+        return self.hmf(m, z) * \
+                (N_cen(m, self.logMmin, self.sig_logm) + \
+                 N_sat(m, self.logMmin, self.sig_logm,
+                       self.m_1, self.alph_sat, self.m_cut))
 
 
     def nbar_g(self, z):
-
+        #TODO: figure out matter limits on integral here
         return inty(self._nbar_func, 0, np.inf, args=(z,))[0]
+
+
     def u_g(self, k, z, m):
 
 

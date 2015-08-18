@@ -17,6 +17,10 @@ class Universe:
         self.hmf_mod = hmf_mod
         self.transf_mod = transf_mod
 
+        self.rho_crit = 2.78e11  # h^2 M_sun/Mpc^3
+        self.rho_bar = self.rho_crit * self.Om
+
+
         if Om + OL != 1:
             self.Ok = 1. - Om - OL
 
@@ -40,9 +44,9 @@ class Universe:
 
 
     def h(self, z, var='z'):
-  
+
         "h(z) = H(z)/H0"
-        
+
         if var == 'z':
 
             return self.E(z, var='z')/self.E(0.,var='z')
@@ -55,15 +59,15 @@ class Universe:
     def D1(self, z, growth_mod=self.growth_mod):
         """
         D1(z)
-        if growth_mod is numeric (EH), growth factor will be evaluated 
-        numerically (using Eisenstein-Hu approximation)  
+        if growth_mod is numeric (EH), growth factor will be evaluated
+        numerically (using Eisenstein-Hu approximation)
         """
 
         if self.growth_factor == "numeric":
-            
+
             a = 1./(1.+ z)
             x = np.log(a)
-            lingrowth = quad(self.gf_integrand, np.log(10**-20.), x, ())[0] 
+            lingrowth = quad(self.gf_integrand, np.log(10**-20.), x, ())[0]
             lingrowth *= self.h(x)
 
 
@@ -73,4 +77,4 @@ class Universe:
 
             return self.D1(z, growth_mod="numeric")/self.D(0., growth_mod="numeric")
 
-    
+
