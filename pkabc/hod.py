@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import erf
 
 
 def N_cen(m, logMmin, sig_logm):
