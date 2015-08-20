@@ -1,18 +1,21 @@
-from universe import Universe
 import numpy as np
 
+
 class Sigma(object):
+
     _defaults = {}
 
     def __init__(self, rho_mean, delta_c, k, p):
 
         self.rho_mean = rho_mean  #mean denisty of the universe
         self.delta_c = delta_c    #critical density of spherical collapse, default :1.68
-        self.k = k                #wave number at which linear power spectrum is computed
+        #self.sigma_8 = sigma_8    #value of the cosmological parameter sigma_8
+        self.k = k                #wave number at which linear power spectrum is computed  
         self.p = p                #linear power spectrum 
 
         # TODO : delta_c in general is cosmology dependent, and  a function of redshift
         #        although its value deviates only slighly from 1.68
+        ## sigma_8 should probably be inherited from the class universe
 
 
     def mass_to_radius(self, m):
@@ -122,10 +125,23 @@ class Sigma(object):
     def dwdx(self, kr):
         """
         dw(kr)/d(kr) : derivative of the tophat window 
-        function in kspace W(kr)
+        function in kspace W(kr). analytical formula is truncated
+        at 10^-3 to avoid divergence
         """
         y = np.zeros(len(kr))
         KR = kr[kr>1.e-3]
         y[kr>1.e-3] = (9.*kr*np.cos(kr) + 3.*(kr**2.- 3.)*np.cos(kr))/(kr**4.)
 
         return y
+
+
+    def self.normalize_power(sigma_8):
+        """
+        input: cosmological parameter sigma_8
+        returns normalization of nunormalized powerspectrum(P0(k)=k^ns*T(k)^2)
+        math : (\frac{\hat{\sigma}_8}{\sigma_8})^2 
+        """
+        sigma_8_hat_squared = self.sigma_squared_r(8.0)
+        norm = sigma_8**2./sigma_8_hat_squared
+  
+        return norm
