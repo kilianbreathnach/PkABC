@@ -1,13 +1,8 @@
 import numpy as np
 from universe import Universe
 from scipy.integrate import quad as inty
-#from scipy.fftpack import
-#from eisenstein_hu import transfnc_eh
-"""sanity check
-xniverse = Universe(Om=.3, OL=.7, ns=1., sig_8=.8 ,h=0.673,\
-                    T_cmb=2.725 , hmf_mod="Tinker", transf_mod="Eisenstein")
-print xniverse.Om
-"""
+from eisenstein_hu import transfnc_eh
+
 class Matter(Universe):
 
     
@@ -51,24 +46,6 @@ class Matter(Universe):
         unnormalized power spectrum P0(k)=k^nsT(k)
         """
         return k ** self.ns * Transf(k) ** 2
-
-
-
-    def _D1int(self, a, Om, OL):
-
-        return (a * self.E(a, var='a')) ** (-3)
-
-
-    def D1(self, z):
-
-        a = 1. / (1 + z)
-
-        return self.E(z) * inty(self._D1int, 0.5, a, args=(self.Om, self.OL))[0]
-
-
-    def growthfac(self, z):
-
-        return (self.D1() / self.D1()) ** 2
 
 
     def Plin(self, k):
