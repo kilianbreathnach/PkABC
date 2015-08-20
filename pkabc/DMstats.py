@@ -1,10 +1,16 @@
 import numpy as np
 from universe import Universe
 from scipy.integrate import quad as inty
-from eisenstein_hu import transfnc_eh
-
+#from scipy.fftpack import
+#from eisenstein_hu import transfnc_eh
+"""sanity check
+xniverse = Universe(Om=.3, OL=.7, ns=1., sig_8=.8 ,h=0.673,\
+                    T_cmb=2.725 , hmf_mod="Tinker", transf_mod="Eisenstein")
+print xniverse.Om
+"""
 class Matter(Universe):
 
+    
 
     def Transf(self, k, transf_mod="Eisenstein"):
 
@@ -106,20 +112,3 @@ class Matter(Universe):
 
     def rho_bar(z):
         pass
-
-    def hmf(self, m, z):
-        """
-        Compute the halo mass function for a variety of models
-        given the cosmological parameters
-        """
-
-        R = 0.6203504908994001 * (m / self.rho_bar(z)) ** (1. / 3)
-
-        if self.hmf_mod == "Tinker":
-
-            f = self.A_t * ((self.sig(R) / self.b_t) ** (- self.a_t) + 1) \
-                         * np.exp(- self.c_t / self.sig(R) ** 2)
-
-            n = f * (self.rho_bar(z) / m) * self.dlnsiginvdM
-
-        return n
