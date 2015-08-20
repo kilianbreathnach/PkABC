@@ -1,13 +1,13 @@
 import numpy as np
 from universe import Universe
 from scipy.integrate import quad as inty
-from scipy.fftpack import
 from eisenstein_hu import transfnc_eh
-
 
 class Matter(Universe):
 
-    def Transf(self, k, transf_mod=self.transf_mod):
+
+    def Transf(self, k, transf_mod="Eisenstein"):
+
         """
         transfer function to add the effects of gravitational instabilities
         and/or baryonic interactions to the fluctuations generated
@@ -18,17 +18,34 @@ class Matter(Universe):
             transfnc_eh(k, )
 
 
-    def window(kr):
-
-        return 3 * ((np.sin(kr) = kr * np.cos(kr)) / kr ** 3)
-
-
-    def powsp(self, k):
+    def tophat_kspace(self, kr):
         """
-        your basic power spectrum
+        tophat window function in k space
+        note: there could be numerical issues near kr=0,
+        this should probably be truncated around kr~10^-6ish
         """
 
+        return 3 * ((np.sin(kr) - kr * np.cos(kr)) / kr ** 3)
+
+
+    def vec_tophat_kspace(self, kr):
+
+        """
+        vectorized form of top-hat window function in k-space,
+        note the truncation of the analytic formula at small KR
+        """
+        W = np.ones(len(kr))
+        KR = kr[kr>1.4e-6]
+        W[kr>1.4e-6] = (3./KR**3.)*(np.sin(KR) - KR*np.cos(KR))
+
+        return W 
+
+    def unnormal_powsp(self, k):
+        """
+        unnormalized power spectrum P0(k)=k^nsT(k)
+        """
         return k ** self.ns * Transf(k) ** 2
+
 
 
     def _D1int(self, a, Om, OL):
@@ -76,7 +93,7 @@ class Matter(Universe):
         return np.sqrt(inty(self._sigint, self.klo, self.khi, args=(R,))[0])
 
 
-    def rho_crit(z)
+    def rho_crit(z):
         """
         Compute critical density of the universe at a given redshift:
         p_c = 3 * H^2(z) / (8 * pi * G)
