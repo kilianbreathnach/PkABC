@@ -1,11 +1,12 @@
 import numpy as np
 from universe import Universe
 from scipy.integrate import quad as inty
+import scipy.integrate as intg
 from eisenstein_hu import transfnc_eh
 
 class Matter(Universe):
 
-    
+        
 
     def Transf(self, k, transf_mod="Eisenstein"):
 
@@ -47,7 +48,6 @@ class Matter(Universe):
         """
         return k ** self.ns * Transf(k) ** 2
 
-
     def Plin(self, k):
         """
         function for the linear matter power spectrum
@@ -59,22 +59,8 @@ class Matter(Universe):
         return 2 * (np.pi ** 2) * (self.delta_H ** 2) * \
                    (k ** ns) * ((1 / self.H_0) ** (ns + 3)) * (self.Transf(k) ** 2)
 
-
     def get_pnorm(self):
         pass
-
-
-    def _sigint(self, k, R):
-
-        kr = k * R
-
-        return self.Plin(k) * self.window(kr) * k ** 2
-
-
-    def sig(self, R):
-
-        return np.sqrt(inty(self._sigint, self.klo, self.khi, args=(R,))[0])
-
 
     def rho_crit(z):
         """
