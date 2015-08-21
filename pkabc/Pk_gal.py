@@ -1,53 +1,140 @@
 import numpy as np
-from scipy.integrate import quad as inty
-from hod import N_cen, N_sat
+from scipy.integrate import simps as inty
+from halofuncs import N_cen, N_sat
 from DMstats import Matter
+from hmf import HMF
+from nbar import nbar_g
 
 
-class Pwspec(Matter):
+class Pwspec:
 
 
-    def _nbar_func(self, m, z):
-
-        return self.hmf(m, z) * \
-                (N_cen(m, self.logMmin, self.sig_logm) + \
-                 N_sat(m, self.logMmin, self.sig_logm,
-                       self.m_1, self.alph_sat, self.m_cut))
-
-
-    def nbar_g(self, z):
-        #TODO: figure out matter limits on integral here
-        return inty(self._nbar_func, 0, np.inf, args=(z,))[0]
+    def __init__(self, k, zvec, Mmin, Mmax):
+        """
+        - k is a 1-d numpy array of wavenumbers
+        - zvec is 1-d array of central values of the redshift bins
+        """
+        self.k = k
+        self.zvec = zvec
+        self.lnm = np.logspace(np.log(Mmin), np.log(Mmax), base=np.exp(1))
 
 
-    def u_g(self, k, z, m):
+    def set_universe(self, Om=0.3, OL=0.7,
+                     ns=0.96, sig_8=0.83,
+                     h=0.7, T_cmb=2.725,
+                     transf_mod="Eisenstein",
+                     hmf_mod="Tinker"):
+
+        self.universe = HMF(Om, OL, ns, sig_8, h, T_cmb,
+                            hmf_mod, transf_mod)
 
 
-    def P_1h(self, k, z1, z2):
+    def precompute(self):
+
+        if not self.universe:
+            print "You must first set the universe parameters"
+
+        self.hmflist = []
+
+        for z in self.zvec:
+            self.hmflist.append(self.universe.hmf(self.lnm, z))
+
+        self.uglist =
+        self.biaslist =
+        self.Plinarr =
+
+
+    def compute_nbarlist(self):
+
+        self.nbarlist = []
+
+        for z in self.zvec:
+            self.nbarlist.append(nbar_g(self.lnm, self.get_hmf(z), self.HOD))
+
+
+    def set_HOD(self, params):
+        """
+        expects iterable of parameter values in the form
+        [Mmin, siglogm, alpha, M_1, Mcut]
+        where masses are in log10
+        """
+        self.HOD = params
+        self.compute_nbarlist()
+
+
+    def zind(self, z):
+
+        return np.where(self.zvec == z)
+
+
+    def get_nbar(self, z):
+
+        return self.nbarlist[self.zind(z)]
+
+
+    def get_hmf(self, z):
+
+        return self.hmflist[self.zind(z)]
+
+
+    def get_ug(self, z):
+
+        return self.uglist[self.zind(z)]
+
+
+    def get_bias(self, z):
+
+        return self.biaslist[self.zind(z)]
+
+
+    def get_Plin(self, z1, z2):
+
+        return self.Plinarr[self.zind(z1), self.zind(z2)]
+
+
+    def _1h_int(self, z):
+        """
+        The integrand for the 1-halo term of the galaxy power spectrum.
+        """
+        return np.exp(self.lnm) * self.get_hmf(z) * \
+                (N_sat(np.exp(self.lnm), self.HOD) ** 2 * \
+                 self.get_ug(z) ** 2 + \
+                 2 * N_cen(np.exp(self.lnm), self.HOD) * \
+                     N_sat(np.exp(self.lnm), self.HOD) * \
+                     self.get_ug(z))
+
+
+    def P_1h(self, z1, z2):
 
         if z1 != z2:
             return 0.
         else:
-            return (1. / self.nbar_g(z1) ** 2) * \
-                    inty(self.hmf, 0, np.inf, args=(z,))[0] * \
-                    (self.N_sat(m) ** 2 * self.u_g(k, z1, m) ** 2 + \
-                    2 * self.N_cen(m) * self.N_sat(m) * self.u_g(k, z1, m))
+            return (1. /  self.get_nbar(z1) ** 2) * \
+                    inty(self._1h_int(z1), self.lnm)
 
 
-    def _I2inty(self, m, k, z):
-        pass
+    def _I2inty(self, z):
+
+        return np.exp(self.lnm) * self.get_hmf(z) * self.get_bias(z)\
+                (N_cen(np.exp(self.lnm), self.HOD) + \
+                 N_sat(np.exp(self.lnm), self.HOD) * self.get_ug(z))
 
 
-    def I_2(k, z):
+    def I_2(self, z):
 
-        return (1. / self.nbar_g(z1)) * \
-                inty(self._I2inty, )
-
-
-    def P_2h(self, k, z1, z2):
-        pass
+        return (1. / self.get_nbar(z)) * \
+                inty(self._I2inty, self.lnm)
 
 
-    def P_g(self, k, z1, z2):
+    def P_2h(self, z1, z2):
 
-        return P_1h(k, z1, z2) + P_2h(k, z1, z2)
+        return self.get_Plin(z1, z2) * I_2(z1) * I_2(z2)
+
+
+    def P_g(self, z1, z2):
+
+        if not (z1 in self.zvec) * (z2 in self.zvec):
+            print "These redshifts are not in the precomputed redshift values"
+            break
+
+        return self.P_1h(z1, z2) + self.P_2h(z1, z2)

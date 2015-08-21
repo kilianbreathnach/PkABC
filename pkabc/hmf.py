@@ -1,8 +1,8 @@
 import numpy as np
-from universe import Universe
+from Dmstats import Matter
 from scipy.integrate import quad as inty
 
-class HMF(Universe):
+class HMF(Matter):
 
 
     def hmf(self, m, z):
@@ -15,7 +15,7 @@ class HMF(Universe):
 
         if self.hmf_mod == "Tinker":
 
-            f = self.A_t * ((self.sig(R) / self.b_t) ** (- self.a_t) + 1) \
+            f = 0.186 * ((self.sig(R) / self.b_t) ** (- self.a_t) + 1) \
                          * np.exp(- self.c_t / self.sig(R) ** 2)
 
             n = f * (self.rho_bar(z) / m) * self.dlnsiginvdM
