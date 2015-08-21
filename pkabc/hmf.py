@@ -13,6 +13,8 @@ class HMF(Matter):
 
         R = 0.6203504908994001 * (m / self.rho_bar(z)) ** (1. / 3)
 
+        sig = self.sig(R)
+
         if self.hmf_mod == "Tinker":
 
             f = 0.186 * ((self.sig(R) / self.b_t) ** (- self.a_t) + 1) \

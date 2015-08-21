@@ -42,6 +42,10 @@ class Universe:
                 return np.sqrt(self.OL + self.Ok * (1./ z) ** 2 + \
                                      self.Om * (1. / z) ** 3)
 
+    def rho_bar(self, z):
+        return self.rho_crit(z) * self.Om *
+
+
 
     def h(self, z, var='z'):
 
