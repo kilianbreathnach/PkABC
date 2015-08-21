@@ -9,13 +9,12 @@ class Sigma(object):
 
         self.rho_mean = rho_mean  #mean denisty of the universe
         self.delta_c = delta_c    #critical density of spherical collapse, default :1.68
-        #self.sigma_8 = sigma_8    #value of the cosmological parameter sigma_8
         self.k = k                #wave number at which linear power spectrum is computed  
         self.p = p                #linear power spectrum 
 
         # TODO : delta_c in general is cosmology dependent, and  a function of redshift
         #        although its value deviates only slighly from 1.68
-        ## sigma_8 should probably be inherited from the class universe
+
 
 
     def mass_to_radius(self, m):
@@ -81,9 +80,7 @@ class Sigma(object):
 
     def dlnr_dlnm(self, r):
         """
-        The derivative of log scale with log mass.
-        
-        For the usual :math:`m\propto r^3` mass assignment, this is just 1/3.
+        The derivative of log radius with log mass.
         """
 
         return 1. / 3.
@@ -125,8 +122,7 @@ class Sigma(object):
     def dwdx(self, kr):
         """
         dw(kr)/d(kr) : derivative of the tophat window 
-        function in kspace W(kr). analytical formula is truncated
-        at 10^-3 to avoid divergence
+        function in kspace W(kr)
         """
         y = np.zeros(len(kr))
         KR = kr[kr>1.e-3]
