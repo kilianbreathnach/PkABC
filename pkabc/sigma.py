@@ -99,12 +99,21 @@ class Sigma(object):
         return .5 * self.dlnsigma_squared_dlnr(r) * self.dlnr_dlnm(r)
 
 
-    def nu(self, r):
+    def nu(self, m):
         """
-        parameter \nu = (\frac{\delta_c}{\sigma(r)})^2
+        parameter \nu = \frac{\delta_c}{\sigma(r)}
         for standard parametrization of halo bias
         """
-        return self.delta_c**2. / self.sigma(r)
+        r= self.mass_to_radius(m)
+        return self.delta_c / np.sqrt(self.sigma_squared_r(r))
+
+    def nu2(self, m):
+        """
+        parameter \nu^2 = (\frac{\delta_c}{\sigma(r)})^2
+        for standard parametrization of halo bias
+        """
+        r = self.mass_to_radius(m)
+        return self.delta_c**2. / self.sigma_squared_r(r)
 
 
     def tophat_k(self, kr):
