@@ -5,14 +5,15 @@ from DMstats import Matter
 from hmf import HMF
 from nbar import nbar_g
 
-
 class Pwspec:
 
 
     def __init__(self, k, zvec, Mmin, Mmax):
+
         """
-        - k is a 1-d numpy array of wavenumbers
+        - k is a 1-d numpy array of wavenumbers. (unit = Mpc^-1)
         - zvec is 1-d array of central values of the redshift bins
+        - Mmin (Mmax) is the minimum (maximum) halo mass. (unit = Msun/h)
         """
         self.k = k
         self.zvec = zvec
@@ -35,13 +36,15 @@ class Pwspec:
             print "You must first set the universe parameters"
 
         self.hmflist = []
+        self.uglist = []
+        self.biaslist = []
+        self.Plinarr = []
 
         for z in self.zvec:
             self.hmflist.append(self.universe.hmf(self.lnm, z))
-
-        self.uglist =
-        self.biaslist =
-        self.Plinarr =
+            self.uglist.append(self.universe.nfw(self.k, self.lnm, z))
+            self.biaslist.append(self.universe.bias(self.lnm, z))
+            self.Plinarr.append(self.universe.plin(self.k, z))
 
 
     def compute_nbarlist(self):
@@ -87,9 +90,9 @@ class Pwspec:
         return self.biaslist[self.zind(z)]
 
 
-    def get_Plin(self, z1, z2):
+    def get_Plin(self, z):
 
-        return self.Plinarr[self.zind(z1), self.zind(z2)]
+        return self.Plinarr[self.zind(z)]
 
 
     def _1h_int(self, z):
@@ -105,7 +108,9 @@ class Pwspec:
 
 
     def P_1h(self, z1, z2):
-
+        """
+        1-halo term in the galaxy power spectrum
+        """
         if z1 != z2:
             return 0.
         else:
@@ -114,25 +119,34 @@ class Pwspec:
 
 
     def _I2inty(self, z):
-
+        """
+        The integrand for the 2-halo term of the galaxy power spectrum. 
+        """
         return np.exp(self.lnm) * self.get_hmf(z) * self.get_bias(z)\
                 (N_cen(np.exp(self.lnm), self.HOD) + \
                  N_sat(np.exp(self.lnm), self.HOD) * self.get_ug(z))
 
 
     def I_2(self, z):
-
+        """
+        Integral 2-halo term in the galaxy power spectrum
+        """
         return (1. / self.get_nbar(z)) * \
                 inty(self._I2inty, self.lnm)
 
 
     def P_2h(self, z1, z2):
-
+        """
+        2-halo term in the galaxy power spectrum
+        """
         return self.get_Plin(z1, z2) * I_2(z1) * I_2(z2)
 
 
     def P_g(self, z1, z2):
-
+        """
+        Galaxy power spectrum
+        Auto (Cross) power spectrum if z1=z2(z1!=z2)
+        """
         if not (z1 in self.zvec) * (z2 in self.zvec):
             print "These redshifts are not in the precomputed redshift values"
             break
