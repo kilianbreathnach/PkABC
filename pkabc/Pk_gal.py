@@ -139,6 +139,8 @@ class Pwspec:
         """
         2-halo term in the galaxy power spectrum
         """
+        # TODO : after finishing matter.py, modify this accordingly
+
         return self.get_Plin(z1, z2) * I_2(z1) * I_2(z2)
 
 
