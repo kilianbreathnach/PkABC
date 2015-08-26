@@ -10,13 +10,8 @@ class Sigma(object):
         self.rho_mean = rho_mean  #mean denisty of the universe
         self.delta_c = delta_c    #critical density of spherical collapse, default :1.68
         self.k = k                #wave number at which linear power spectrum is computed  
-        self.p = p                #linear power spectrum 
-
-        # TODO : delta_c in general is cosmology dependent, and  a function of redshift
-        #        although its value deviates only slighly from 1.68
-
-
-
+        self.p = p                #linear power spectrum.
+	
     def mass_to_radius(self, m):
         """
         The units of ``m`` should be consistent with 
@@ -140,7 +135,7 @@ class Sigma(object):
         return y
 
 
-    def self.normalize_power(sigma_8):
+    def normalize_power(self, sigma_8):
         """
         input: cosmological parameter sigma_8
         returns normalization of nunormalized powerspectrum(P0(k)=k^ns*T(k)^2)
