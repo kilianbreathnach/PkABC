@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Universe:
+class Universe(object):
 
 
     def __init__(self, Om, OL, ns, sig_8,
@@ -16,14 +16,10 @@ class Universe:
         self.T_cmb = T_cmb
         self.hmf_mod = hmf_mod
         self.transf_mod = transf_mod
-
-        self.rho_crit = 2.78e11  # h^2 M_sun/Mpc^3
-        self.rho_bar = self.rho_crit * self.Om
-
+        #self.delta_c = 1.68
 
         if Om + OL != 1:
             self.Ok = 1. - Om - OL
-
 
     def E(self, z, var='z'):
         """
@@ -42,43 +38,47 @@ class Universe:
                 return np.sqrt(self.OL + self.Ok * (1./ z) ** 2 + \
                                      self.Om * (1. / z) ** 3)
 
-    def rho_bar(self, z):
-        return self.rho_crit(z) * self.Om *
-
-
 
     def h(self, z, var='z'):
-
+  
         "h(z) = H(z)/H0"
-
+        
         if var == 'z':
 
             return self.E(z, var='z')/self.E(0.,var='z')
 
     def gf_integrand(self, x):
 
-        return np.exp(-2.*x)*(self.h(x))**-3.
+        return np.exp(-2.*x)*(self.h(x,var='z'))**-3.
 
 
-    def D1(self, z, growth_mod=self.growth_mod):
+    def D1(self, z):
         """
         D1(z)
-        if growth_mod is numeric (EH), growth factor will be evaluated
-        numerically (using Eisenstein-Hu approximation)
+        if growth_mod is numeric (EH), growth factor will be evaluated 
+        numerically (using Eisenstein-Hu approximation)  
         """
 
-        if self.growth_factor == "numeric":
+        if not isinstance(z, collections.Iterable):
+            z = [z]
+        d1 = np.zeros_like(z)
 
+        if self.growth_factor == "numeric":
+            
             a = 1./(1.+ z)
             x = np.log(a)
-            lingrowth = quad(self.gf_integrand, np.log(10**-20.), x, ())[0]
-            lingrowth *= self.h(x)
+            for i, xx in enumerate(x):
+
+              d1[i] = quad(self.gf_integrand, np.log(10**-20.), xx, ())[0] 
+              d1[i] *= self.h(x)
+              
+            return d1
 
 
-    def gf(self, z, growth_mod=self.growth_mod):
+    def gf(self, z):
 
         if self.growth_mod == "numeric":
 
             return self.D1(z, growth_mod="numeric")/self.D(0., growth_mod="numeric")
 
-
+    
