@@ -145,6 +145,8 @@ class Matter(Universe):
     def sigma(self, R):
         return mp.sqrt(self.master_sig.sigma_squared_r(R))
 
+    def R_m(self, m, z):
+        return 0.6203504908994001 * (m / self.rho_mean(z)) ** (1. / 3)
 
     def check_z(self, z):
 
@@ -170,7 +172,7 @@ class Matter(Universe):
         a_z = a_0 * (1 + z) ** (-0.06)
         b_z = b_0 * (1 + z) ** ( - alph)
 
-        R = 0.6203504908994001 * (np.exp(lnm) / self.rho_mean(z)) ** (1. / 3)
+        R = self.R_m(np.exp(lnm), z)
 
         self.check_z(z)
 
@@ -205,7 +207,7 @@ class Matter(Universe):
         K = 2.7
 
         Mstar = F * m
-        Rstar = 0.6203504908994001 * (Mstar / self.rho_mean(z)) ** (1. / 3)
+        Rstar = R_m(Mstar, z)
 
         zc = minimize(self.c_minfunc, 0.5, args=(Rstar,))['x']
 
@@ -217,10 +219,21 @@ class Matter(Universe):
         returns a matrix of u_g(k|m, z) in k and m for each redshift
         """
 
-        umat = np.zeros((k.shape[0], lnm.shape[0]))
+        c = []
 
+        for m in np.exp(lnm):
 
-        umat =
+            c.append(c200(m, z))
+
+        c = np.array(c)
+
+        d200 = (200. / 3) * (c ** 3 / (np.log(1 + c) - c / (1 + c)))
+
+        mu = k[None, :] * (R_m(np.exp(lnm), z) / c)[:, None]
+
+        umat = ((3 * d200) / (200 * c ** 3)) * \
+                  (np.cos(mu) * () + \
+                   np.sin(mu) * ()
 
 
 
