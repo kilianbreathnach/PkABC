@@ -233,3 +233,19 @@ class Matter(Universe):
                    np.sin(mu * c) / (mu + mu * c) )
      
         return umat
+
+    def bias(self, lnm, z):
+
+        """
+        returns a 1d array of halo bias b_h(m,z) in m for each redshift
+        """
+	m = np.exp(lnm)
+        
+        R = R_m(M , z)
+        s = self.sigma(R)
+        nu = self.delta_c(z) / s
+
+        b = 1. - (nu ** .1325)/(nu ** .1325 + 1.0716) + \
+	    0.183 * nu ** 1.5 + 0.2652 * nu ** 2.4
+
+        return b
