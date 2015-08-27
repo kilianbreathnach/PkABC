@@ -4,7 +4,7 @@ import numpy as np
 class Universe(object):
 
 
-    def __init__(self, Om, OL, ns, sig_8,
+    def __init__(self, Om=0.3, OL=0.7, ns=0.96, sig_80.82,
                  h=0.673, T_cmb=2.725,
                  hmf_mod="Tinker", transf_mod="Eisenstein"):
 
@@ -40,9 +40,9 @@ class Universe(object):
 
 
     def h(self, z, var='z'):
-  
+
         "h(z) = H(z)/H0"
-        
+
         if var == 'z':
 
             return self.E(z, var='z')/self.E(0.,var='z')
@@ -55,8 +55,8 @@ class Universe(object):
     def D1(self, z):
         """
         D1(z)
-        if growth_mod is numeric (EH), growth factor will be evaluated 
-        numerically (using Eisenstein-Hu approximation)  
+        if growth_mod is numeric (EH), growth factor will be evaluated
+        numerically (using Eisenstein-Hu approximation)
         """
 
         if not isinstance(z, collections.Iterable):
@@ -64,14 +64,14 @@ class Universe(object):
         d1 = np.zeros_like(z)
 
         if self.growth_factor == "numeric":
-            
+
             a = 1./(1.+ z)
             x = np.log(a)
             for i, xx in enumerate(x):
 
-              d1[i] = quad(self.gf_integrand, np.log(10**-20.), xx, ())[0] 
+              d1[i] = quad(self.gf_integrand, np.log(10**-20.), xx, ())[0]
               d1[i] *= self.h(x)
-              
+
             return d1
 
 
@@ -79,6 +79,6 @@ class Universe(object):
 
         if self.growth_mod == "numeric":
 
-            return self.D1(z, growth_mod="numeric")/self.D(0., growth_mod="numeric")
+            return self.D1(z, growth_mod="numeric")/self.D1(0., growth_mod="numeric")
 
-    
+
