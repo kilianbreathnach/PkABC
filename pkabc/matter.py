@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import minimize
+from scipy.special import sici
 from universe import Universe
 from sigma import Sigma
 import functions
@@ -215,27 +216,20 @@ class Matter(Universe):
 
 
     def u_g(self, k, lnm, z):
+
         """
         returns a matrix of u_g(k|m, z) in k and m for each redshift
         """
-
-        c = []
-
+        
+        umat = np.zeros((k.shape[0] , lnm.shape[0]))
         for m in np.exp(lnm):
 
-            c.append(c200(m, z))
-
-        c = np.array(c)
-
-        d200 = (200. / 3) * (c ** 3 / (np.log(1 + c) - c / (1 + c)))
-
-        mu = k[None, :] * (R_m(np.exp(lnm), z) / c)[:, None]
-
-        umat = ((3 * d200) / (200 * c ** 3)) * \
-                  (np.cos(mu) * () + \
-                   np.sin(mu) * ()
-
-
-
-
-
+            c = c200(m, z)
+            d200 = (200. / 3) * (c ** 3 / (np.log(1 + c) - c / (1 + c)))
+            mu = k*(R_m(np.exp(lnm), z) / c)   # mu is a k vector
+            umat[:,i] = ((3 * d200) / (200 * c ** 3)) * \
+                  (np.cos(mu) * (sici(mu + mu * c)[1] - sici(mu)[1]) + \
+                   np.sin(mu) * (sici(mu + mu * c)[0] - sici(mu)[0]) - \
+                   np.sin(mu * c) / (mu + mu * c) )
+     
+        return umat
