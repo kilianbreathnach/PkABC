@@ -65,42 +65,70 @@ class Matter(Universe):
            self.bias_fit = bias_fit
 
    def growth(self):
+       """
+       growth factor
+       """
 
            return Universe.gf(self.z)
 
    def omegamz(self):
+       """
+       dimensionless matter density at redshift z
+       """
 
            return self.omegam/(self.omegam + self.omegal*(1.+self.z)**-3.)
 
    def delta_c(self):
+       """
+       critical matter over density for spherical 
+       collapse at redshift z
+       """
 
 	   return 0.15 * ((2.*np.pi)**(2./3))* (self.omegamz)**0.0055
 
    def k(self):
+       """
+       array of wave numbers
+       """
           
            return np.arange(self.k_min, self.k_max, self.dk)
 
    def lnM(self):
+       """
+       array of log halo masses
+       """
 
            return np.arange(self.lnM_min, self.lnM_max, self.lnM)
 
    def T(self):
+       """
+       transfer function
+       """
 
            return transfnc_eh(self.k)
            
-   def unnormal_p_lin(self):
+   def unnormal_p0_lin(self):
+       """
+       basic power spectrum 
+       """
       
        	   return self.k**self.n * self.T
 
-   def normal_p_lin(self):
-	   
+   def normal_p0_lin(self):
+       """
+       normalized linear power spectrum at redshift zero
+       """	   
            # TODO : make sure rho_mean is delivered by the Universe
 
-           sig = Sigma(self.rho_mean, self.delta_c, self.k, self.unnormal_p_lin)
+           sig = Sigma(self.rho_mean, self.delta_c, self.k, self.unnormal_p0_lin)
 	   norm = sig.normalize_power(self.sigma_8)
           
-           return  norm * self.unnormal_p_lin	
+           return  norm * self.unnormal_p0_lin	
 
-   def p_lin(self):
+   def normal_pz_lin(self):
+       """
+       linear power spectrum at redshift z
+       """
+           return self.normal_p0_lin * self.growth
 
-           return self.normal_p_lin * self.growth 
+    
