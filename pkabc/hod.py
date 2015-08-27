@@ -14,11 +14,3 @@ def N_sat(m, hod):
     Calculates the average number of satelite galaxies in halos of mass m.
     """
     return N_cen(m, hod[:2]) * (m / hod[3]) ** hod[2] * np.exp(- hod[4] / m)
-
-
-def u_g(k, z, m):
-    """
-    Calculates the Fourier Transform of the NFW profile
-    """
-    pass
-
