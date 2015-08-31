@@ -9,15 +9,20 @@ def transfnc_eh(k, Om=0.3, h=0.7, T_cmb=2.725, incl_baryons=True):
 
     if not incl_baryons:
 
-        q = (k * (T_cmb / 2.7) ** 2) / (Om * h ** 2)
+        """
+        returns fitting formula for transfer 
+        function in the zero baryon limit
+        """ 
 
-        Bc = 1. / (1 - 0.949 * fvb)
-        av =
+        theta = T_cmb / 2.7
+        gamma = Om*h
+	# equation 28          
+	q = (k * (theta) ** 2) / (gamma*h)
+	#equation 29
+	Cq = 14.2 + 731. / (1. + 62.5 * q)    
+        Lq = np.log(2. * np.exp(1.) + 1.8 * q)
 
-        Lq = np.log(np.exp(1) + 1.84 * Bc * np.sqrt(av) * q)
-        Cq = 14.4 + 325. / (1 + 60.5 * q ** 1.11)
-
-        return Lq / (Lq + Cq * q ** 2)
+        return Lq/(Lq + Cq * q**2.)
 
     elif incl_baryons:
 
@@ -25,6 +30,7 @@ def transfnc_eh(k, Om=0.3, h=0.7, T_cmb=2.725, incl_baryons=True):
         # TODO: Fix up this part
 
         # convert k to Mpc^-1 rather than hMpc^-1
+        """
         rk = k * h
         Omh2 = Om * h ** 2
 
@@ -100,4 +106,5 @@ def transfnc_eh(k, Om=0.3, h=0.7, T_cmb=2.725, incl_baryons=True):
 
         // Equation 8
         tk_eh=(om_b/om_m)*tb+(1.-om_b/om_m)*tc;
-
+        """
+        return np.ones((k.shape))
