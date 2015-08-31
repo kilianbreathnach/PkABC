@@ -30,6 +30,7 @@ def transfnc_eh(k, Om=0.3, h=0.7, T_cmb=2.725, incl_baryons=True):
         # TODO: Fix up this part
 
         # convert k to Mpc^-1 rather than hMpc^-1
+        """
         rk = k * h
         Omh2 = Om * h ** 2
 
@@ -105,4 +106,5 @@ def transfnc_eh(k, Om=0.3, h=0.7, T_cmb=2.725, incl_baryons=True):
 
         // Equation 8
         tk_eh=(om_b/om_m)*tb+(1.-om_b/om_m)*tc;
-
+        """
+        return np.ones((k.shape))
