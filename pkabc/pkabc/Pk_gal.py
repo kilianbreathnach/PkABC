@@ -9,7 +9,7 @@ class Pwspec:
     Object class for computing the analytic galaxy power spectrum as in the
     appendix to Schneider et al, 2006.
     """
-    def __init__(self, k, zvec, Mmin, Mmax):
+    def __init__(self, k, zvec, Mmin=1e11, Mmax=1e15):
 
         """
         - k is a 1-d numpy array of wavenumbers. (unit = Mpc^-1)
@@ -23,7 +23,8 @@ class Pwspec:
 
     def set_universe(self, Om=0.3, OL=0.7, ns=0.96,
                      sig_8=0.82, h=0.673, T_cmb=2.725
-                     k_min = 1.e-3, k_max = 2.e3, dk = 0.05,
+                     k=self.k, k_min=1.e-3, k_max=2.e3, dk=0.05,
+                     lnM=self.lnm,
                      lnM_min=np.log(1e11), lnM_max=np.log(1e15),
                      dlnM=np.log(5e9),
                      transfer_fit="EH",
@@ -37,6 +38,7 @@ class Pwspec:
         """
         self.universe = Matter(Om=0.3, OL=0.7, ns=0.96,
                                sig_8=0.82, h=0.673, T_cmb=2.725
+                               k=
                                k_min = 1.e-3, k_max = 2.e3, dk = 0.05,
                                lnM_min=np.log(1e11), lnM_max=np.log(1e15),
                                dlnM=np.log(5e9),
@@ -63,7 +65,7 @@ class Pwspec:
 
         for z in self.zvec:
             self.hmflist.append(self.universe.hmf(self.lnm, z))
-            self.uglist.append(self.universe.u_g(self.k, self.lnm, z))
+            self.uglist.append(self.universe.u_g(self.lnm, z))
             self.biaslist.append(self.universe.bias(self.lnm, z))
 
 

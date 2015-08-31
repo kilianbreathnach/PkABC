@@ -49,6 +49,23 @@ class Universe(object):
         return np.sqrt(self.Esq(z, var=var))
 
 
+    def omegamz(self, z):
+        """
+        dimensionless matter density at redshift z
+        """
+        return (self.Om * (1 + z) ** 3) / self.Esq(z)
+
+
+    def rho_crit(self, z):
+
+        return 2.77e11 * self.h * self.Esq(z)
+
+
+    def rho_mean(self, z):
+
+        return self.omegamz(z) * self.rho_crit(z)
+
+
     def gf_integrand(self, x):
 
         return np.exp(-2. * x)*(self.E(x, var='z'))**-3.

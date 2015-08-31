@@ -42,46 +42,42 @@ class Matter(Universe):
     ------------------------------------------------
     """
     def __init__(self,
-                 k_min = 1.e-3, k_max = 2.e3, dk = 0.05,
+                 k=None, k_min=1.e-3, k_max=2.e3, dk=0.05,
+                 lnM=None,
                  lnM_min=np.log(1e11), lnM_max=np.log(1e15), dlnM=np.log(5e9),
                  transfer_fit="EH",
                  hmf_fit="Tinker",
                  bias_fit="Tinker",
                  **kwargs):
 
-           #initializing cosmology inherited from the Universe class
-           super(Matter, self).__init__(**kwargs)
+        #initializing cosmology inherited from the Universe class
+        super(Matter, self).__init__(**kwargs)
 
-           #initializing other stuff
-           self.z  = z
-           self.k_min = k_min
-           self.k_max = k_max
-       	   self.dk = dk
-           self.lnM_min = lnM_min
-           self.lnM_max = lnM_max
-       	   self.dlnM = dlnM
-   	   self.transfer_fit = transfer_fit
-           self.hmf_fit = hmf_fit
-           self.bias_fit = bias_fit
+        #initializing other stuff
+        if k not None:
+            self.k = k
+        else:
+            self.k_min = k_min
+            self.k_max = k_max
+       	    self.dk = dk
+            self.gen_k()
 
-           self.trackz = -1
+        if lnM not None:
+            self.lnM = lnM
+        else:
+            self.lnM_min = lnM_min
+            self.lnM_max = lnM_max
+            self.dlnM = dlnM
+            self.gen_lnM()
 
+   	self.transfer_fit = transfer_fit
+        self.hmf_fit = hmf_fit
+        self.bias_fit = bias_fit
 
-    def omegamz(self, z):
-        """
-        dimensionless matter density at redshift z
-        """
-        return self.omegam/(self.omegam + self.omegal*(1.+ z)**-3.)
+        self.trackz = -1
 
-
-    def rho_crit(self, z):
-
-        return 2.77e11 * self.h * self.Esq(z)
-
-
-    def rho_mean(self, z):
-
-        return self.omegamz(z) * self.rho_crit(z)
+        self.master_sig = Sigma(1, 1.686, self.k, self.unnormal_p0_lin())
+        self.norm_P0 = self.master_sig.normalize_power(self.sig_8)
 
 
     def delta_c(self, z):
@@ -89,70 +85,56 @@ class Matter(Universe):
         critical matter over density for spherical
         collapse at redshift z
         """
- 	return 0.15 * ((2.*np.pi)**(2./3))* (self.omegamz(z))**0.0055
+ 	return 0.15 * ((2 * np.pi) ** (2. / 3)) * (self.omegamz(z) ** 0.0055)
 
 
-    def k(self):
+    def gen_k(self):
         """
         array of wave numbers
         """
-        return np.arange(self.k_min, self.k_max, self.dk)
+        self.k = np.arange(self.k_min, self.k_max, self.dk)
 
 
-    def lnM(self):
+    def gen_lnM(self):
         """
         array of log halo masses
         """
-        return np.arange(self.lnM_min, self.lnM_max, self.lnM)
+        self.lnM = np.arange(self.lnM_min, self.lnM_max, self.lnM)
 
 
     def T(self):
         """
         transfer function
         """
-        return transfnc_eh(self.k)
+        return transfnc_eh(self.k, Om=self.Om, h=self.h, T_cmb=self.T_cmb,
+                           incl_baryons=False)
 
 
     def unnormal_p0_lin(self):
         """
         basic power spectrum
         """
-        return self.k**self.n * self.T
+        return (self.k ** self.ns) * (self.T() ** 2)
 
 
     def normal_p0_lin(self):
         """
         normalized linear power spectrum at redshift zero
         """
+        return  self.norm_P0 * self.unnormal_p0_lin()
 
-        # TODO : make sure rho_mean is delivered by the Universe
-
-        sig = Sigma(self.rho_mean, self.delta_c, self.k, self.unnormal_p0_lin)
- 	norm = sig.normalize_power(self.sigma_8)
-
-        return  norm * self.unnormal_p0_lin
 
     def normal_pz_lin(self, z):
         """
         linear power spectrum at redshift z
         """
-        return self.normal_p0_lin * self.gf(z)
+        return self.normal_p0_lin() * self.gf(z)
 
 
     def reset_mastersig(self, z):
 
         self.master_sig = Sigma(self.rho_mean(z), self.delta_c(z), self.k,
-        self.normal_pz_lin(z))
-
-
-    def sigma(self, R):
-
-        return mp.sqrt(self.master_sig.sigma_squared_r(R))
-
-
-    def R_m(self, m, z):
-
-        return 0.6203504908994001 * (m / self.rho_mean(z)) ** (1. / 3)
+                                self.normal_pz_lin(z))
 
 
     def check_z(self, z):
@@ -178,11 +160,8 @@ class Matter(Universe):
         a_z = a_0 * (1 + z) ** (-0.06)
         b_z = b_0 * (1 + z) ** ( - alph)
 
-        R = self.R_m(np.exp(lnm), z)
-
         self.check_z(z)
-
-        sig = self.sigma(R)
+        sig = np.sqrt(self.master_sig.sigma_squared_m(np.exp(lnm)))
 
         if self.hmf_mod == "Tinker":
 
@@ -200,7 +179,7 @@ class Matter(Universe):
 
         s = self.sigma(Rstar)
 
-        return np.abs(s - delta_c(z))
+        return np.abs(s - self.delta_c(z))
 
 
     def c200(self, m, z):
@@ -220,20 +199,21 @@ class Matter(Universe):
         return K * ((1 + zc) / (1 + z))
 
 
-    def u_g(self, k, lnm, z):
+    def u_g(self, lnm, z):
         """
         returns a matrix of u_g(k|m, z) in k and m for each redshift
         """
-        umat = np.zeros((k.shape[0] , lnm.shape[0]))
+        umat = np.zeros((self.k.shape[0] , lnm.shape[0]))
+
         for i, m in enumerate(np.exp(lnm)):
 
             c = c200(m, z)
             d200 = (200. / 3) * (c ** 3 / (np.log(1 + c) - c / (1 + c)))
-            mu = k*(R_m(np.exp(lnm), z) / c)   # mu is a k vector
-            umat[:,i] = ((3 * d200) / (200 * c ** 3)) * \
-                  (np.cos(mu) * (sici(mu + mu * c)[1] - sici(mu)[1]) + \
-                   np.sin(mu) * (sici(mu + mu * c)[0] - sici(mu)[0]) - \
-                   np.sin(mu * c) / (mu + mu * c) )
+            mu = self.k * (R_m(np.exp(lnm), z) / c)   # mu is a k vector
+            umat[:, i] = ((3 * d200) / (200 * c ** 3)) * \
+                         (np.cos(mu) * (sici(mu + mu * c)[1] - sici(mu)[1]) + \
+                          np.sin(mu) * (sici(mu + mu * c)[0] - sici(mu)[0]) - \
+                          np.sin(mu * c) / (mu + mu * c) )
 
         return umat
 
