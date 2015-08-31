@@ -3,7 +3,7 @@ from scipy.optimize import minimize
 from scipy.special import sici
 from universe import Universe
 from sigma import Sigma
-from eisenstein_hu import transfnc_eh
+from eisenstein_hu import transferfnc_eh
 
 class Matter(Universe):
     """
@@ -97,7 +97,7 @@ class Matter(Universe):
         """
         array of log halo masses
         """
-        self.lnM = np.arange(self.lnM_min, self.lnM_max, self.dlnM)
+        self.lnM = np.arange(self.lnM_min, self.lnM_max, self.lnM)
 
 
     def T(self):
