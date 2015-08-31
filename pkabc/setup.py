@@ -1,9 +1,9 @@
-from distutils.core import setup
-from Cython.Build import cythonize
-import numpy as np
+from setuptools import setup
 
-setup(
-    name = 'vpf counting',
-    ext_modules = cythonize(["vpf.pyx", "NFW.pyx", "HOD.pyx"]),
-    include_dirs=[np.get_include()]
-)
+setup(name='pkabc',
+      version='0.1',
+      description='generate analytic galaxy powerspectrum',
+      author='The cosmo boys',
+      license='MIT',
+      packages=['pkabc'],
+      zip_safe=False)

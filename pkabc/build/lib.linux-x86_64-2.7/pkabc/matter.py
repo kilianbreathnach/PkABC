@@ -9,45 +9,45 @@ from eisenstein_hu import transferfnc_eh
 
 class Matter(Universe):
 
-   """
-   The purpose of this class is to deliver all the
-   objects necessary to compute the galaxy-galaxy
-   or galaxy-matter power spectra.
-   These are:
-   ------------------------------------------------
-   Inputs :
+    """
+    The purpose of this class is to deliver all the
+    objects necessary to compute the galaxy-galaxy
+    or galaxy-matter power spectra.
+    These are:
+    ------------------------------------------------
+    Inputs :
 
-   Cosmology = list of cosmological parameters
-               inherited from the Universe
-   k = array of wave numbers (unit = Mpc^-1)
-   z = redshift
-   M = list of halo masses (unit Msun/h)
-   -------------------------------------------------
+    Cosmology = list of cosmological parameters
+                inherited from the Universe
+    k = array of wave numbers (unit = Mpc^-1)
+    z = redshift
+    M = list of halo masses (unit Msun/h)
+    -------------------------------------------------
 
-   Returns:
+    Returns:
 
-   Plin(k, z) = 1d Array: linear matter power spectrum
-                evaluated at array of k values
-                at redshift z,
+    Plin(k, z) = 1d Array: linear matter power spectrum
+                 evaluated at array of k values
+                 at redshift z,
 
-   dndlnm(z)  = 1d Array: \frac{d\n}{d\ln(m)}
-                Halo mass function evaluated at array of
-                halo masses (M) and redshift z
+    dndlnm(z)  = 1d Array: \frac{d\n}{d\ln(m)}
+                 Halo mass function evaluated at array of
+                 halo masses (M) and redshift z
 
-   bh(m, z)   = 1d Array: halo bias evaluated at array of halo masses
-                (M) and redshift z
+    bh(m, z)   = 1d Array: halo bias evaluated at array of halo masses
+                 (M) and redshift z
 
-   ug(k, m, z)= 2d Array: Fourier transform of dark matter
-                halo density profile (here we assume NFW)
+    ug(k, m, z)= 2d Array: Fourier transform of dark matter
+                 halo density profile (here we assume NFW)
 
-   ------------------------------------------------
-   """
-   def __init__(self,
+    ------------------------------------------------
+    """
+    def __init__(self,
                  k_min = 1.e-3, k_max = 2.e3, dk = 0.05,
-                 lnM_min=np.log(1.e4), lnM_max=np.log(5.e4), dlnM = np.log(1.e1)
-                 transfer_fit = "EH",
-                 hmf_fit = "Tinker",
-                 bias_fit = "Tinker",
+                 lnM_min=np.log(1e11), lnM_max=np.log(1e15), dlnM=np.log(5e9),
+                 transfer_fit="EH",
+                 hmf_fit="Tinker",
+                 bias_fit="Tinker",
                  **kwargs):
 
            #initializing cosmology inherited from the Universe class
@@ -220,9 +220,9 @@ class Matter(Universe):
         """
         returns a matrix of u_g(k|m, z) in k and m for each redshift
         """
-        
+
         umat = np.zeros((k.shape[0] , lnm.shape[0]))
-        for m in np.exp(lnm):
+        for i, m in enumerate(np.exp(lnm)):
 
             c = c200(m, z)
             d200 = (200. / 3) * (c ** 3 / (np.log(1 + c) - c / (1 + c)))
@@ -231,17 +231,20 @@ class Matter(Universe):
                   (np.cos(mu) * (sici(mu + mu * c)[1] - sici(mu)[1]) + \
                    np.sin(mu) * (sici(mu + mu * c)[0] - sici(mu)[0]) - \
                    np.sin(mu * c) / (mu + mu * c) )
-     
+
         return umat
 
     def bias(self, lnm, z):
 
         """
         returns a 1d array of halo bias b_h(m,z) in m for each redshift
+        (Tinker 2010 model)
         """
 	m = np.exp(lnm)
-        
-        R = R_m(M , z)
+
+        self.check_z(z)
+
+        R = R_m(m, z)
         s = self.sigma(R)
         nu = self.delta_c(z) / s
 
