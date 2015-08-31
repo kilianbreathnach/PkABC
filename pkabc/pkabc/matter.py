@@ -3,9 +3,7 @@ from scipy.optimize import minimize
 from scipy.special import sici
 from universe import Universe
 from sigma import Sigma
-import functions
-import halo_functions
-from eisenstein_hu import transferfnc_eh
+from eisenstein_hu import transfnc_eh
 
 class Matter(Universe):
     """
@@ -54,7 +52,7 @@ class Matter(Universe):
         super(Matter, self).__init__(**kwargs)
 
         #initializing other stuff
-        if k not None:
+        if k != None:
             self.k = k
         else:
             self.k_min = k_min
@@ -62,7 +60,7 @@ class Matter(Universe):
        	    self.dk = dk
             self.gen_k()
 
-        if lnM not None:
+        if lnM != None:
             self.lnM = lnM
         else:
             self.lnM_min = lnM_min
@@ -99,7 +97,7 @@ class Matter(Universe):
         """
         array of log halo masses
         """
-        self.lnM = np.arange(self.lnM_min, self.lnM_max, self.lnM)
+        self.lnM = np.arange(self.lnM_min, self.lnM_max, self.dlnM)
 
 
     def T(self):

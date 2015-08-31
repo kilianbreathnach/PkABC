@@ -1,5 +1,5 @@
 import numpy as np
-from halo_funcs import N_cen, N_sat
+from hod import N_cen, N_sat
 from scipy.integrate import simps as inty
 
 

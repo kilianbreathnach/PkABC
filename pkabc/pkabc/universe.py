@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import quad
-
+import collections
 
 class Universe(object):
     """
@@ -10,8 +10,9 @@ class Universe(object):
     universe.
     """
 
-    def __init__(self, Om=0.3, OL=0.7, ns=0.96,
-                 sig_8=0.82, h=0.673, T_cmb=2.725):
+
+    def __init__(self, Om=0.3, OL=0.7, Ok= None, ns=0.96,
+                 sig_8=0.82, h=0.673, T_cmb=2.725, growth_mod = "numeric"):
 
         self.Om = Om
         self.OL = OL
@@ -19,9 +20,10 @@ class Universe(object):
         self.sig_8 = sig_8
         self.h = h
         self.T_cmb = T_cmb
-
+        self.Ok = Ok
         if Om + OL != 1:
             self.Ok = 1. - Om - OL
+        self.growth_mod = growth_mod
 
 
     def Esq(self, z, var='z'):
@@ -30,7 +32,7 @@ class Universe(object):
         """
         if var == 'z':
             if not self.Ok:
-                return self.OL + self.Om * (1 + 3) ** 3
+                return self.OL + self.Om * (1. + z) ** 3
             else:
                 return self.OL + self.Ok * (1 + z) ** 2 + \
                                  self.Om * (1. + z) ** 3
@@ -65,10 +67,17 @@ class Universe(object):
 
         return self.omegamz(z) * self.rho_crit(z)
 
+    
+    def ha(self, a):
+  
+        "H(a)/H0"
 
-    def gf_integrand(self, x):
+        return (self.Om * (1. / a) ** 3. + self.OL) ** -0.5
 
-        return np.exp(-2. * x)*(self.E(x, var='z'))**-3.
+
+    def gf_integrand(self, a):
+
+        return (a * self.ha(a)) ** -3.
 
 
     def D1(self, z):
@@ -77,18 +86,16 @@ class Universe(object):
         if growth_mod is numeric (EH), growth factor will be evaluated
         numerically (using Eisenstein-Hu approximation)
         """
-        if not isinstance(z, collections.Iterable):
-            z = [z]
+
         d1 = np.zeros_like(z)
 
-        if self.growth_factor == "numeric":
+        if self.growth_mod == "numeric":
 
             a = 1./(1.+ z)
-            x = np.log(a)
-            for i, xx in enumerate(x):
+            for i, xx in enumerate(a):
 
-              d1[i] = quad(self.gf_integrand, np.log(10**-20.), xx, ())[0]
-              d1[i] *= self.h(x)
+              d1[i] = quad(self.gf_integrand, 10.**-4., xx, ())[0]
+              d1[i] *= self.ha(a)
 
             return d1
 
@@ -97,4 +104,4 @@ class Universe(object):
 
         if self.growth_mod == "numeric":
 
-            return self.D1(z, growth_mod="numeric")/self.D1(0., growth_mod="numeric")
+            return self.D1(z)/self.D1(0.)

@@ -1,6 +1,6 @@
 import numpy as np
-
-
+import collections
+import scipy.integrate as intg
 class Sigma(object):
 
     _defaults = {}
@@ -43,7 +43,7 @@ class Sigma(object):
         rest = self.p * self.k * self.k
 
         for i, rr in enumerate(r):
-            integ = rest * self.tophat_k(rr * k) ** 2
+            integ = rest * self.tophat_k(rr * self.k) ** 2
             sigma[i] = (0.5 / np.pi ** 2) * intg.simps(integ, dx=self.dk)
 
         return sigma
