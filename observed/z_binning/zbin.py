@@ -12,8 +12,10 @@ import os.path
 
 # --- Local ---
 from Spectrum import data as spec_data
+from Spectrum import fft as spec_fft
+from Spectrum import spec as spec_spec
 
-def build_zbin_data(DorR, cat_corr, **kwargs): 
+def zslice_data(DorR, cat_corr, **kwargs): 
     ''' Construct redshift binned galaxy/random catalog 
 
     Parameters
@@ -26,6 +28,10 @@ def build_zbin_data(DorR, cat_corr, **kwargs):
     * cat_corr example {'catalog': {'name': 'nseries', 'n_mock': 1}, 'correction': {'name': 'zbin1of5'}}
     * For the sake of simplicity, if 'of5' is specified in correction name the code will build 1,2,3,4,5 of 5 not 
     only the specified correction 
+    * Example :
+        cat_corr = {'catalog': {'name': 'nseries', 'n_mock': 1},
+                'correction': {'name': 'zbin1of5'}}
+        zslice_data('data', cat_corr)
 
     '''
     cat = cat_corr['catalog']       # catalog dictionary
@@ -71,4 +77,6 @@ if __name__=='__main__':
             'catalog': {'name': 'nseries', 'n_mock': 1},
             'correction': {'name': 'zbin1of5'}
             }
-    build_zbin_data('data', cat_corr)
+    spec = spec_spec.Spec('power', cat_corr, Ngrid=960)
+    spec.Read()
+    #zslice_data('data', cat_corr)
