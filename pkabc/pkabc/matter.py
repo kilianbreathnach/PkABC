@@ -42,7 +42,7 @@ class Matter(Universe):
     def __init__(self,
                  k=None, k_min=1.e-3, k_max=2.e3, dk=0.05,
                  lnM=None,
-                 lnM_min=np.log(1e11), lnM_max=np.log(1e15), dlnM=np.log(5e9),
+                 lnM_min=np.log(1e11), lnM_max=np.log(1e15),
                  transfer_fit="EH",
                  hmf_fit="Tinker",
                  bias_fit="Tinker",
@@ -81,9 +81,9 @@ class Matter(Universe):
     def delta_c(self, z):
         """
         critical matter over density for spherical
-        collapse at redshift z
+        collapse at redshift z, taken from van der Bosch (2013)
         """
- 	return 0.15 * ((2 * np.pi) ** (2. / 3)) * (self.omegamz(z) ** 0.0055)
+ 	return 1.686470199841145 * (self.omegamz(z) ** 0.0055)
 
 
     def gen_k(self):
