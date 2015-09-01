@@ -9,6 +9,7 @@ Author(s): ChangHoon Hahn
 '''
 import numpy as np 
 import os.path
+import multiprocessing as mp
 
 # --- Local ---
 from Spectrum import data as spec_data
@@ -47,6 +48,7 @@ def zslice_data(DorR, cat_corr, **kwargs):
     def_cat_corr = {'catalog': cat, 'correction': {'name': 'default'}} 
     data = spec_data.Data(DorR, def_cat_corr, **kwargs) 
     data.Read(**kwargs)
+    print 'Reading ', data.file_name 
 
     # slice catalog into redshifts 
     # interpret correction name (e.g. 1of5)
@@ -72,11 +74,75 @@ def zslice_data(DorR, cat_corr, **kwargs):
         print 'Writing ', slice_data.file_name
         slice_data.Write()
 
-if __name__=='__main__': 
+    return 
+
+def Pk_zslice(mock_name, i_mock, n_slices, **kwargs):
+    ''' Calculate P(k) for redshift sliced survey catalogs  
+
+    Parameters
+    ----------
+    mock_name : name of mock catalog 
+    i_mock : mock index (e.q. 1-84 for Nseries mocks)
+    slice_str : string specifying the redshift slicing (e.g. "1of5")
+
+    Notes
+    -----
+    * Only implemented for Nseries for now 
+    * Multiprocessing function available to calculate P(k) simultaneously   
+    * Calls spec from Spectrum module 
+
+    '''
+    if mock_name.lower() != 'nseries': 
+        raise NotImplementedError("Only Nseries implemented")
+    
+    slice_corr_name = ''.join(['zbin1of', str(n_slices)])
+
     cat_corr = {
-            'catalog': {'name': 'nseries', 'n_mock': 1},
-            'correction': {'name': 'zbin1of5'}
+            'catalog': {'name': mock_name, 'n_mock': i_mock}, 
+            'correction': {'name': slice_corr_name} 
             }
-    spec = spec_spec.Spec('power', cat_corr, Ngrid=960)
-    spec.Read()
-    #zslice_data('data', cat_corr)
+    
+    # Check that file exists 
+    R_data = spec_data.Data('random', cat_corr, **kwargs)
+    D_data = spec_data.Data('data', cat_corr, **kwargs)
+    if not os.path.isfile(R_data.file_name): 
+        print ' '
+        print 'Writing ', R_data.file_name
+        print ' '
+        zslice_data('random', cat_corr, **kwargs)
+    if not os.path.isfile(D_data.file_name): 
+        print ' '
+        print 'Writing ', D_data.file_name
+        print ' '
+        zslice_data('data', cat_corr, **kwargs)
+
+    spec = spec_spec.Spec('power', cat_corr, **kwargs) 
+    spec.calculate()
+
+    return None 
+
+def Pk_zslice_mp(mock_name, n_mocks, n_slices, Nthreads=5, **kwargs):
+    ''' Multiprocessing wrapper for Pk_zslice function which 
+    calculates the P(k) for specified redshift slices 
+
+    Paramaters
+    ----------
+    n_mocks : number of mocks to calculate
+
+    '''
+
+    pool = mp.Pool(processes=Nthreads)
+    mapfn = pool.map
+
+    arglist = [ [mock_name, i_mock, n_slices, kwargs] for i_mock in range(1, n_mocks+1) ] 
+
+    mapfn(Pk_zslice, [arg for arg in arglist])
+
+    pool.close()
+    pool.terminate()
+    pool.join()
+
+    return
+
+if __name__=='__main__': 
+    Pk_zslice('nseries', 1, 5, Ngrid=360)
