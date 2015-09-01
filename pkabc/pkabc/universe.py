@@ -67,41 +67,28 @@ class Universe(object):
 
         return self.omegamz(z) * self.rho_crit(z)
 
-    
-    def ha(self, a):
-  
-        "H(a)/H0"
+    def ha(self, x):
+        """
+        auxilliary variable for calculation of growth factor
+        """
+        return (self.Om * (np.exp(-1. * x)) ** 3. + self.OL) ** -.5
 
-        return (self.Om * (1. / a) ** 3. + self.OL) ** -0.5
+    def integrand(self, x):
 
-
-    def gf_integrand(self, a):
-
-        return (a * self.ha(a)) ** -3.
+        return np.exp(-2. * x) * (self.ha(x)) ** -3.
 
 
     def D1(self, z):
-        """
-        D1(z)
-        if growth_mod is numeric (EH), growth factor will be evaluated
-        numerically (using Eisenstein-Hu approximation)
-        """
 
-        d1 = np.zeros_like(z)
+        a = 1. / (1 + z)
+        x = np.log(a)
+        lingrowth = quad(self.integrand, np.log(10**-20.), x, ())[0]
+        lingrowth *= self.ha(x)
 
-        if self.growth_mod == "numeric":
-
-            a = 1./(1.+ z)
-            for i, xx in enumerate(a):
-
-              d1[i] = quad(self.gf_integrand, 10.**-4., xx, ())[0]
-              d1[i] *= self.ha(a)
-
-            return d1
-
+        return lingrowth
 
     def gf(self, z):
 
         if self.growth_mod == "numeric":
 
-            return self.D1(z)/self.D1(0.)
+            return self.D1(z) / self.D1(0.)
