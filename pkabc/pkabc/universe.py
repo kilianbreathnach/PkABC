@@ -11,8 +11,8 @@ class Universe(object):
     """
 
 
-    def __init__(self, Om=0.3, OL=0.7, Ok= None, ns=0.96,
-                 sig_8=0.82, h=0.673, T_cmb=2.725, growth_mod = "numeric"):
+    def __init__(self, Om=0.272, OL=0.728, Omb=0.0455, Ok=None, ns=0.967,
+                 sig_8=0.81, h=1.0, T_cmb=2.725, growth_mod = "numeric"):
 
         self.Om = Om
         self.OL = OL
@@ -60,7 +60,7 @@ class Universe(object):
 
     def rho_crit(self, z):
 
-        return 2.77e11 * self.h * self.Esq(z)
+        return 2.77e11 * self.h ** 2 * self.Esq(z)
 
 
     def rho_mean(self, z):

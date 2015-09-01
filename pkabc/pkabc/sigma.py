@@ -44,7 +44,7 @@ class Sigma(object):
 
         for i, rr in enumerate(r):
             integ = rest * self.tophat_k(rr * self.k) ** 2
-            sigma[i] = (0.5 / np.pi ** 2) * intg.simps(integ, dx=self.dk)
+            sigma[i] = (0.5 / np.pi ** 2) * intg.simps(integ, self.k)
 
         return sigma
 
@@ -53,7 +53,7 @@ class Sigma(object):
 
         r = self.mass_to_radius(m)
 
-        return sigma_squared_r(self, r)
+        return self.sigma_squared_r(r)
 
 
     def dlnsigma_squared_dlnr(self, r):
@@ -69,7 +69,7 @@ class Sigma(object):
             w = self.tophat_k(y)
             dw = self.dwdx(y)
             integ = w * dw * rest
-            out[i] = intg.simps(integ, dx=self.dk) / (np.pi ** 2 * s[i] ** 2)
+            out[i] = intg.simps(integ, self.k) / (np.pi ** 2 * s[i] ** 2)
 
         return out
 
