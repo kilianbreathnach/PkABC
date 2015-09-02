@@ -40,10 +40,10 @@ class Pwspec:
                                sig_8=0.82, h=0.673, T_cmb=2.725,
                                h_transf=0.7,
                                k=None,
-                               k_min = 1.e-3, k_max = 2.e3, dk = 0.05,
+                               k_min = 1.e-3, k_max = 2.e3, kbins = 1000,
                                lnM=None,
                                lnM_min=np.log(1e11), lnM_max=np.log(1e15),
-                               dlnM=np.log(5e9),
+                               dlnMbins = 1000,
                                transfer_fit="EH",
                                hmf_fit="Tinker",
                                bias_fit="Tinker")
@@ -66,9 +66,9 @@ class Pwspec:
         self.biaslist = []
 
         for z in self.zvec:
-            self.hmflist.append(self.universe.hmf(self.lnm, z))
-            self.uglist.append(self.universe.u_g(self.lnm, z))
-            self.biaslist.append(self.universe.bias(self.lnm, z))
+            self.hmflist.append(self.universe.hmf(z))
+            self.uglist.append(self.universe.u_g(z))
+            self.biaslist.append(self.universe.bias(z))
 
 
     def set_HOD(self, params):
