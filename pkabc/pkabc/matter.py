@@ -183,11 +183,11 @@ class Matter(Universe):
         return n
 
 
-    def c_minfunc(self, z, Rstar):
+    def c_minfunc(self, z, Mstar):
 
-        sig = np.sqrt(self.master_sig.sigma_squared_r(Rstar))
+        sig = np.sqrt(self.master_sig.sigma_squared_m(Mstar))
 
-        return np.abs(sig - self.delta_c(z))
+        return (sig - self.delta_c(z)) ** 2
 
 
     def c200(self, m, z):
@@ -200,9 +200,8 @@ class Matter(Universe):
         K = 2.7
 
         Mstar = F * m
-        Rstar = self.master_sig.mass_to_radius(Mstar)
 
-        zc = minimize(self.c_minfunc, 0.5, args=(Rstar,))['x']
+        zc = minimize(self.c_minfunc, 0.5, args=(Mstar,))['x']
 
         return K * ((1 + zc) / (1 + z))
 
