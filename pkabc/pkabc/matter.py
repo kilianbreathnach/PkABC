@@ -183,9 +183,10 @@ class Matter(Universe):
         return n
 
 
-    def c_minfunc(self, z, Rstar):
 
-        s = self.sigma(Rstar)
+    def c_minfunc(self, z, Mstar):
+
+        s = self.master_sig.sigma_squared_m(Mstar) ** .5
 
         return np.abs(s - self.delta_c(z))
 
@@ -200,9 +201,8 @@ class Matter(Universe):
         K = 2.7
 
         Mstar = F * m
-        Rstar = self.master_sig.mass_to_radius(Mstar)
 
-        zc = minimize(self.c_minfunc, 0.5, args=(Rstar,))['x']
+        zc = minimize(self.c_minfunc, 0.5, args=(Mstar,))['x']
 
         return K * ((1 + zc) / (1 + z))
 
@@ -211,7 +211,7 @@ class Matter(Universe):
         """
         returns a matrix of u_g(k|m, z) in k and m for each redshift
         """
-        self.check_z(z)
+        self.check_z(z) 
 
         umat = np.zeros((self.k.shape[0] , self.lnM.shape[0]))
 
