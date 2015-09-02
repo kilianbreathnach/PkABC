@@ -23,7 +23,7 @@ class Pwspec:
 	self.precompute()
 
     def set_universe(self, Om=0.3, OL=0.7, ns=0.96,
-                     sig_8=0.82, h=0.673, T_cmb=2.725,
+                     sig_8=0.81, h=1.0, T_cmb=2.725, h_transf=0.7,
                      k_min=1.e-3, k_max=2.e3, dk=0.05,
                      lnM_min=np.log(1e11), lnM_max=np.log(1e15),
                      dlnM=np.log(5e9),
@@ -38,6 +38,7 @@ class Pwspec:
         """
         self.universe = Matter(Om=0.3, Ol=0.7, ns=0.96,
                                sig_8=0.82, h=0.673, T_cmb=2.725,
+                               h_transf=0.7,
                                k=None,
                                k_min = 1.e-3, k_max = 2.e3, dk = 0.05,
                                lnM=None,
@@ -46,7 +47,7 @@ class Pwspec:
                                transfer_fit="EH",
                                hmf_fit="Tinker",
                                bias_fit="Tinker")
-         
+
 
     def precompute(self):
         """
@@ -183,5 +184,5 @@ class Pwspec:
         if not (z1 in self.zvec) * (z2 in self.zvec):
 
             raise ValueError("These redshifts are not in the precomputed redshift values")
-            
+
         return self.P_1h(z1, z2) + self.P_2h(z1, z2)

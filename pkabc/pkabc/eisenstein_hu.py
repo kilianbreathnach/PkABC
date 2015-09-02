@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def transfnc_eh(k, Om=0.3, Om_b=0.0455, h=1.0, T_cmb=2.725, incl_baryons=True):
+def transfnc_eh(k, Om=0.3, Om_b=0.0455, h=0.7, T_cmb=2.725, incl_baryons=True):
     """
     Compute the Eisenstein & Hu (1997) Transfer function for wave number k
     given a set of cosmological parameters.

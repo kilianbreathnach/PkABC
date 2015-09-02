@@ -12,7 +12,8 @@ class Universe(object):
 
 
     def __init__(self, Om=0.272, OL=0.728, Omb=0.0455, Ok=None, ns=0.967,
-                 sig_8=0.81, h=1.0, T_cmb=2.725, growth_mod = "numeric"):
+                 sig_8=0.81, h=1.0, T_cmb=2.725, h_transf=0.7,
+                 growth_mod = "numeric"):
 
         self.Om = Om
         self.OL = OL
@@ -20,6 +21,7 @@ class Universe(object):
         self.sig_8 = sig_8
         self.h = h
         self.T_cmb = T_cmb
+        self.h_transf = h_transf
         self.Ok = Ok
         if Om + OL != 1:
             self.Ok = 1. - Om - OL

@@ -13,7 +13,6 @@ class Matter(Universe):
     These are:
     ------------------------------------------------
     Inputs :
-
     Cosmology = list of cosmological parameters
                 inherited from the Universe
     k = array of wave numbers (unit = Mpc^-1)
@@ -102,8 +101,8 @@ class Matter(Universe):
         """
         transfer function
         """
-        return transfnc_eh(self.k, Om=self.Om, h=self.h, T_cmb=self.T_cmb,
-                           incl_baryons=self.incl_baryons)
+        return transfnc_eh(self.k, Om=self.Om, h=self.h_transf,
+                           T_cmb=self.T_cmb, incl_baryons=self.incl_baryons)
 
 
     def delta_c(self, z):
@@ -162,7 +161,6 @@ class Matter(Universe):
         a_z = a_0 * (1 + z) ** (-0.06)
         b_z = b_0 * (1 + z) ** ( - alph)
 
-        self.check_z(z)
         sig = np.sqrt(self.master_sig.sigma_squared_m(np.exp(self.lnM)))
 
         return A_z * ((sig / b_z) ** (- a_z) + 1) * np.exp(- c_0 / sig ** 2)
@@ -173,6 +171,8 @@ class Matter(Universe):
         Compute the halo mass function for a variety of models
         given the cosmological parameters
         """
+        self.check_z(z)
+
         if self.hmf_fit  == "Tinker":
 
             f = self._hmf_fit(z)
@@ -185,9 +185,9 @@ class Matter(Universe):
 
     def c_minfunc(self, z, Rstar):
 
-        s = self.sigma(Rstar)
+        sig = np.sqrt(self.master_sig.sigma_squared_r(Rstar))
 
-        return np.abs(s - self.delta_c(z))
+        return np.abs(sig - self.delta_c(z))
 
 
     def c200(self, m, z):
@@ -217,9 +217,9 @@ class Matter(Universe):
 
         for i, m in enumerate(np.exp(self.lnM)):
 
-            c = c200(m, z)
+            c = self.c200(m, z)
             d200 = (200. / 3) * (c ** 3 / (np.log(1 + c) - c / (1 + c)))
-            mu = self.k * (self.master_sig.mass_to_radius(np.exp(self.lnM)) / c)   # mu is a k vector
+            mu = self.k * (self.master_sig.mass_to_radius(m) / c)  # mu is a k vector
             umat[:, i] = ((3 * d200) / (200 * c ** 3)) * \
                          (np.cos(mu) * (sici(mu + mu * c)[1] - sici(mu)[1]) + \
                           np.sin(mu) * (sici(mu + mu * c)[0] - sici(mu)[0]) - \
@@ -233,13 +233,10 @@ class Matter(Universe):
         returns a 1d array of halo bias b_h(m,z) in m for each redshift
         (Tinker 2010 model)
         """
-	m = np.exp(self.lnM)
-
         self.check_z(z)
 
-        R = R_m(m, z)
-        s = self.sigma(R)
-        nu = self.delta_c(z) / s
+        sig = np.sqrt(self.master_sig.sigma_squared_m(np.exp(self.lnM)))
+        nu = self.delta_c(z) / sig
 
         # parameters for halo overdensity of 200
         y = np.log10(200)
