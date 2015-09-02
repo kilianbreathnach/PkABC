@@ -177,7 +177,7 @@ class Matter(Universe):
 
             f = self._hmf_fit(z)
 
-            n = - f * (self.rho_mean(z) / np.exp(self.lnM) ** 2) * \
+            n = - f * (self.rho_mean(z) / np.exp(self.lnM)) * \
                       self.master_sig.dlnsigma_dlnm(np.exp(self.lnM))
 
         return n
