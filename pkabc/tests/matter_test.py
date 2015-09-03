@@ -128,7 +128,7 @@ ax = fig.add_subplot(111, projection='3d')
 ls = []
 
 cNorm_mass = colors.Normalize(vmin=0, vmax=len(testmat.lnM))
-scalarMap_mass = cmx.ScalarMappable(norm=cNorm, cmap=cmap)
+scalarMap_mass = cmx.ScalarMappable(norm=cNorm_mass, cmap=cmap)
 
 for z in zs:
 
