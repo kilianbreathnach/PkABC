@@ -9,7 +9,7 @@ class Pwspec:
     Object class for computing the analytic galaxy power spectrum as in the
     appendix to Schneider et al, 2006 and Van der Bosch et al, 2013.
     """
-    def __init__(self, zvec, k, Mmin=1e11, Mmax=1e15):
+    def __init__(self, zvec, k=None, Mmin=1e11, Mmax=1e15):
 
         """
         - k is a 1-d numpy array of wavenumbers. (unit = Mpc^-1)
@@ -18,13 +18,13 @@ class Pwspec:
         """
         self.k = k
         self.zvec = zvec
-        self.lnm = np.logspace(np.log(Mmin), np.log(Mmax), base=np.exp(1))
+#        self.lnm = np.logspace(np.log(Mmin), np.log(Mmax), base=np.exp(1))
         self.set_universe()
 	self.precompute()
 
     def set_universe(self, Om=0.3, OL=0.7, ns=0.96,
                      sig_8=0.81, h=1.0, T_cmb=2.725, h_transf=0.7,
-                     k_min=1.e-3, k_max=2.e3, dk=0.05,
+                     k=None, k_min=1.e-3, k_max=2.e3, dk=0.05,
                      lnM_min=np.log(1e11), lnM_max=np.log(1e15),
                      dlnM=np.log(5e9),
                      transfer_fit="EH",
@@ -36,17 +36,19 @@ class Pwspec:
         Matter class defined in matter.py, which has functions for computing
         the required dark matter statistics.
         """
-        self.universe = Matter(Om=0.3, Ol=0.7, ns=0.96,
+        self.universe = Matter(Om=0.3, OL=0.7, ns=0.96,
                                sig_8=0.82, h=0.673, T_cmb=2.725,
                                h_transf=0.7,
-                               k=None,
+                               k=k,
                                k_min = 1.e-3, k_max = 2.e3, kbins = 1000,
                                lnM=None,
                                lnM_min=np.log(1e11), lnM_max=np.log(1e15),
-                               dlnMbins = 1000,
+                               lnMbins=1000,
                                transfer_fit="EH",
                                hmf_fit="Tinker",
                                bias_fit="Tinker")
+
+        self.lnm = self.universe.lnM
 
 
     def precompute(self):
@@ -89,12 +91,12 @@ class Pwspec:
         self.nbarlist = []
 
         for z in self.zvec:
-            self.nbarlist.append(nbar_g(self.lnm, self.get_hmf(z), self.HOD))
+            self.nbarlist.append(nbar_g(self.universe.lnM, self.get_hmf(z), self.HOD))
 
 
     def zind(self, z):
 
-        return np.where(self.zvec == z)
+        return np.where(self.zvec == z)[0]
 
 
     def get_nbar(self, z):
@@ -118,8 +120,9 @@ class Pwspec:
         """
         g1 = self.universe.gf(z1)
         g2 = self.universe.gf(z2)
+        psp = self.universe.normal_p0_lin()
 
-        return dHsq * g1 * g2 * Pspec_norm
+        return g1 * g2 * psp
 
 
     def get_bias(self, z):
@@ -127,16 +130,16 @@ class Pwspec:
         return self.biaslist[self.zind(z)]
 
 
-    def _1h_int(self, z):
+    def _1h_int(self, z, k_i):
         """
         The integrand for the 1-halo term of the galaxy power spectrum.
         """
-        return np.exp(self.lnm) * self.get_hmf(z) * \
+        return self.get_hmf(z) * \
                 (N_sat(np.exp(self.lnm), self.HOD) ** 2 * \
-                 self.get_ug(z) ** 2 + \
+                self.get_ug(z)[k_i, :] ** 2 + \
                  2 * N_cen(np.exp(self.lnm), self.HOD) * \
                      N_sat(np.exp(self.lnm), self.HOD) * \
-                     self.get_ug(z))
+                     self.get_ug(z)[k_i, :])
 
 
     def P_1h(self, z1, z2):
@@ -146,25 +149,33 @@ class Pwspec:
         if z1 != z2:
             return 0.
         else:
-            return (1. /  self.get_nbar(z1) ** 2) * \
-                    inty(self._1h_int(z1), self.lnm)
+            plist = []
+            for i in range(len(self.universe.k)):
+                plist.append((1. /  self.get_nbar(z1) ** 2) * \
+                              inty(self._1h_int(z1, i), self.lnm))
+
+            return np.array(plist)
 
 
-    def _I2inty(self, z):
+    def _I2inty(self, z, k_i):
         """
         The integrand for the 2-halo term of the galaxy power spectrum.
         """
-        return np.exp(self.lnm) * self.get_hmf(z) * self.get_bias(z)\
+        return self.get_hmf(z) * self.get_bias(z) * \
                 (N_cen(np.exp(self.lnm), self.HOD) + \
-                 N_sat(np.exp(self.lnm), self.HOD) * self.get_ug(z))
+                 N_sat(np.exp(self.lnm), self.HOD) * self.get_ug(z)[k_i, :])
 
 
     def I_2(self, z):
         """
         Integral 2-halo term in the galaxy power spectrum
         """
-        return (1. / self.get_nbar(z)) * \
-                inty(self._I2inty, self.lnm)
+        ilist = []
+        for i in range(len(self.universe.k)):
+            ilist.append((1. / self.get_nbar(z)) * \
+                          inty(self._I2inty(z, i), self.lnm))
+
+        return np.array(ilist)
 
 
     def P_2h(self, z1, z2):
@@ -173,7 +184,7 @@ class Pwspec:
         """
         # TODO : after finishing matter.py, modify this accordingly
 
-        return self.get_Plin(z1, z2) * I_2(z1) * I_2(z2)
+        return self.get_Plin(z1, z2) * self.I_2(z1) * self.I_2(z2)
 
 
     def P_g(self, z1, z2):
