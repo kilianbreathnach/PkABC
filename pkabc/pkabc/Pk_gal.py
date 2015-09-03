@@ -24,9 +24,8 @@ class Pwspec:
 
     def set_universe(self, Om=0.3, OL=0.7, ns=0.96,
                      sig_8=0.81, h=1.0, T_cmb=2.725, h_transf=0.7,
-                     k=None, k_min=1.e-3, k_max=2.e3, dk=0.05,
+                     k=None, k_min=1.e-3, k_max=2.e3, kbins=1000,
                      lnM_min=np.log(1e11), lnM_max=np.log(1e15),
-                     dlnM=np.log(5e9),
                      transfer_fit="EH",
                      hmf_fit="Tinker",
                      bias_fit="Tinker"):
@@ -36,17 +35,16 @@ class Pwspec:
         Matter class defined in matter.py, which has functions for computing
         the required dark matter statistics.
         """
-        self.universe = Matter(Om=0.3, OL=0.7, ns=0.96,
-                               sig_8=0.82, h=0.673, T_cmb=2.725,
-                               h_transf=0.7,
+        self.universe = Matter(Om=Om, OL=OL, ns=ns,
+                               sig_8=sig_8, h=h, T_cmb=T_cmb,
+                               h_transf=h_transf,
                                k=k,
-                               k_min = 1.e-3, k_max = 2.e3, kbins = 1000,
-                               lnM=None,
-                               lnM_min=np.log(1e11), lnM_max=np.log(1e15),
+                               k_min=k_min, k_max=k_max, kbins=kbins,
+                               lnM_min=lnM_min, lnM_max=lnM_max,
                                lnMbins=1000,
-                               transfer_fit="EH",
-                               hmf_fit="Tinker",
-                               bias_fit="Tinker")
+                               transfer_fit=transfer_fit,
+                               hmf_fit=hmf_fit,
+                               bias_fit=bias_fit)
 
         self.lnm = self.universe.lnM
 
