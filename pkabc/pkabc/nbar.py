@@ -5,7 +5,7 @@ from scipy.integrate import simps as inty
 
 def nbar_g(lnm, hmf, HODparams):
 
-    integrand = np.exp(lnm) * hmf * \
+    integrand = hmf * \
                  (N_cen(np.exp(lnm), HODparams[:2]) + \
                   N_sat(np.exp(lnm), HODparams))
 

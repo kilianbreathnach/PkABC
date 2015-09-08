@@ -168,7 +168,7 @@ class Matter(Universe):
 
     def hmf(self, z):
         """
-        Compute the halo mass function for a variety of models
+        Compute the halo mass function (dn/dlnM) for a variety of models
         given the cosmological parameters
         """
         self.check_z(z)
