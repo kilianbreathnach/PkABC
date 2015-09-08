@@ -1,0 +1,68 @@
+\documentclass{article}
+
+%define general packages
+\usepackage{fullpage}
+\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{natbib}
+\usepackage{footnote}
+\usepackage{courier}
+
+%internal short cuts
+\def \HgA {H$\gamma_A$}
+\def \gon {Gonz\'{a}lez}
+\def \Hbp {H$\beta ^\prime$}
+
+\begin{document}
+
+\title{Observed BOSS Galaxy Powerspectrum}
+\author{ChangHoon Hahn, Mohammadjavad Vakili, Kilian Walsh}
+
+\begin{abstract}
+Observed galaxy powerspectrum is necessary to fit and calibrate the parameters 
+of the halo model powerspectrum. To calculate the observed powerspectrum we use 
+the Baryon Oscillation Spectroscopic Survey (BOSS) CMASS and LOWZ Data Release 12 
+combined sample, which consists of $850,364$ galaxies over the redshift range 
+$0.2 < z < 0.75$. We divide our sample into redshift bins of $\Delta z = $ to 
+maximize the number of redshift bins while keeping that the effects of cosmic 
+variance below (quote some number). 
+% Motivate the reason why we want more redshift bins
+
+Furthermore, in calcuating the galaxy powerspectrum we use 
+the fiber collision correction method described in Hahn et al. (in prep), which 
+accounts for systematic effects in the shot noise correction term of the 
+powerspectrum estimator and statistically reconstructs the small scale clustering 
+by modeling the line-of-sight displacement of fiber collided pairs. Using the
+correction method, we reduce the effect of fiber collisions to $<\% 1$ over the 
+$k < 0.82\;h/\mathrm{Mpc}$. Combining the cosmic variance estimates from simulated
+mock catalogs with uncertainty contributions from systematic effects, we present
+observed powerspectrum measurements with uncertainties of $< \mathrm{somenumber}$. 
+\end{abstract}
+
+\section{BOSS Galaxy Sample} \label{sec:cmasslowz}
+
+\begin{itemize}
+\item Describe CMASS LOWZ combined sample DR 12 
+\item Describe systematic effects here 
+\end{itemize}
+
+\section{Powerspectrum}
+\subsection{Estimator} 
+\begin{itemize}
+\item Describe revised FKP estimator to account for systematics in BOSS galaxy sample 
+\end{itemize}
+
+\subsection{Fiber Collision Correction}
+\begin{itemize}
+\item Describe, briefly, the fiber collision correction method of Hahn et al. (in prep.) 
+\item Present fiber collision corrected P(k) for entire combined sample? just CMASS? two bin combined sample? 
+\end{itemize}
+
+\subsection{Redshift Binning} 
+\begin{itemize}
+\item Describe the motivation for narrow redshift binning 
+\item Describe observational challenges of narrow redshift binning
+\item Descirbe final redshift binning and cosmic variance modeling using nseries mocks 
+\end{itemize}
+
+\end{document}
