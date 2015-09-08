@@ -5,6 +5,7 @@ Parameters
 '''
 from scipy.stats import uniform
 from scipy.stats import norm 
+from scipy.stats import multivariate_normal
 
 class Params(object): 
 
@@ -15,26 +16,32 @@ class Params(object):
         """
         
         self.prior_dict = prior_dict.copy() # dictionary that specifies prior info
-        self.prior_shape = self.prior_dict['shape']
-
 
     def prior(self): 
         """ Prior from which parameters are drawn
         """
 
-        if self.prior_shape == 'uniform': 
+        priorz = []  
 
-            loc = self.prior_dict['min']
-            scale = self.prior_dict['max'] - self.prior_dict['min']
+        for key in self.prior_dict.keys(): 
 
-            priorz = uniform( loc , scale ) 
+            prior_key = self.prior_dict[key]
 
-        elif self.prior_shape == 'gauss': 
+            if prior_key['shape'] == 'uniform': 
+                
+                loc = prior_key['min']
 
-            loc = self.prior_dict['mean']
-            scale = self.prior_dict['stddev']
+                scale = prior_key['max'] - prior_key['min']
 
-            priorz = norm( loc , scale ) 
+                priorz.append( uniform( loc , scale ) ) 
+
+            elif prior_key['shape'] == 'gauss': 
+
+                loc = prior_key['mean']
+
+                scale = prior_key['stddev']
+
+                priorz.append( norm( loc , scale ) )
 
         return priorz
 
@@ -42,17 +49,25 @@ class Params(object):
         """ Simulator 
         """
        
-        loc = theta
+        loc = theta[0]
+        scale = theta[1]
 
-        simz = norm(loc, 1.0)
+        simz = multivariate_normal(loc, scale)
 
         return simz.pdf
 
 
 if __name__=="__main__": 
-    parz = Params(
-            {'shape': 'gauss', 'mean': 0.0, 'stddev': 1.0}
-            )
-    prz = parz.prior()
-    print prz.rvs(size=100)
-    print prz.pdf(0.0)
+    parz = Params({
+                'mu': {'shape': 'uniform', 'min': -1.0, 'max': 1.0}, 
+                'sigma': { 'shape': 'gauss', 'mean': 0.0, 'stddev': 1.0}
+                })
+    prz_mu, prz_sigma = parz.prior()
+    print prz_mu.rvs(size=100)
+    print prz_mu.pdf(0.0)
+    print prz_sigma.rvs(size=100)
+    print prz_sigma.pdf(0.0)
+
+    theta_t = np.zeros((2, N))
+
+
