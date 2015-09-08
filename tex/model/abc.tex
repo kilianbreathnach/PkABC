@@ -1,0 +1,155 @@
+\documentclass[12pt, preprint]{aastex}
+\usepackage{graphicx}	% For figures
+\usepackage{natbib}	% For citep and citep
+\usepackage{amsmath}	% for \iint
+\usepackage{bbm}
+\usepackage[breaklinks]{hyperref}	% for blackboard bold numbers
+\usepackage{hyperref}
+\hypersetup{colorlinks}
+\usepackage{color}
+\usepackage{morefloats}
+\definecolor{darkred}{rgb}{0.5,0,0}
+\definecolor{darkgreen}{rgb}{0,0.5,0}
+\definecolor{darkblue}{rgb}{0,0,0.5}
+\hypersetup{ colorlinks,
+linkcolor=darkblue,
+filecolor=darkgreen,
+urlcolor=darkred,
+citecolor=darkblue }
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\newcommand{\beq}{\begin{equation}}
+\newcommand{\eeq}{\end{equation}}
+
+\begin{document}
+
+\author{
+  Mohammadjavad~Vakili\altaffilmark{1},
+  ChangHoon~Hahn\altaffilmark{1}, ...}
+\altaffiltext{1}{Center for Cosmology and Particle Physics, Department of Phyics,
+             New York University, 4 Washington Pl., room 424, New York, NY, 10003, USA}
+
+\email{mjvakili@nyu.edu}
+
+\title{Likelihood free inference of cosmological parameters from measurements of galaxy clustering in SDSS III BOSS data}
+
+\begin{abstract}
+
+Measurement of the large scale clustering of galaxies has been 
+one of the most crucial methods in constraining cosmological 
+parameters and studying the expansion history of the universe.
+Numerous studies have been carried out on studying the clustering 
+of galaxies in \emph{Sloan Digital Sky Survey} Baryonic Oscillation 
+Spectroscopic Survey, \emph{BOSS}, in order to put constraint on 
+cosmological parameters, and to test gravity on large scales.
+These constraints are achived by performing Bayesian analysis, which 
+relies on evaluating the likelihood function, the probability of 
+the observing the data given the model. Likelihood evaluation however, 
+is computationally expensive, and requires making assumption about the 
+form of the function, usually assumed Gaussian distribution. 
+In this work we apply the Approximate Bayesian Computation method, ABC, 
+to the problem of infering cosmological parameters from measurements of 
+the galaxy power spectrum in SDSS BOSS data. This method requires a prior over 
+cosmological parameters from which large set of parameters are sampled from, 
+forward modelling of the galaxy-galaxy power spectrum which takes cosmological 
+parameters as input, measurement of galaxy power spectrum, and a distance metric 
+for comparison of the measured power spectrum with the model.
+In this work, the model of galaxy power spectrum is computed by 2-loop renormalized 
+perturbation theory, convolved with survey window function. Furthermore, an 
+adaptive importance sampling extension of ABC is used in order to make the sampling 
+more efficient. 
+
+\end{abstract}
+
+\section{Introduction}
+
+Parameter estimation in cosomlogy is commonly done with Bayesian inference. 
+In the Bayesian framework, constraints on cosmological parameters are achieved by 
+sampling from the posterior distribution, the probability of the parameters of the 
+model given the data. Posteriors are evaluated by multiplying the prior probability 
+distribution of the paramters of the model with the likelihood function, the probability 
+of the observed data given the parameters of the model.
+Therefore, Bayesian inference relies on the evaluation of the likelihood function.
+ 
+Evaluation of the likelihood requires on making assumption about the functional 
+form of the likelihood. It is often assumed that the likelihood is Gaussian distribution 
+with a given covariance matrix that needs to be evaluated from simulating a large set of 
+mock catalogs, or other techniques such as bootstrap. In order to 
+compute the likelihood funciton, one needs to invert a high dimensional covariance 
+matrix which makes the likelihood evaluation and therefore sampling from the posterior 
+computationally intractable.
+
+Approximate Bayesian Computation, ABC, is a method that eliminates the need for likelihood. 
+In recent years, this technique has been used in a number of cosmological studies, such as 
+the inference of cosmological parameters from modelling of the distances of supernovae type Ia, 
+and modelling of weak lensing peak maps. Exploring the parameter space with ABC algorithm 
+requires three essential ingredients: (1) a prior pdf on the parameters that we wish to estimate, 
+(2) a forward model (simulator) of the observations, and (3) a distance metric for comparing 
+the model and the observed data. In problems where likelihood evaluation is not analytically or 
+computationally tractable, this algorithm bypasses the need for likelihood evaluation.
+
+To date, different variations of ABC algorithm have been introduced  and implemented 
+in the literature. One of the earliest methods is likelihood free Markov Chain Monte 
+Carlo. In this algorithm, an initial draw from the prior is kept, if the distance between 
+the simulated model corresponding to that parameter and the observed data is less than a threshold. 
+In the consequent steps, the proposed parameters are accepted if \emph{first} they satisfy the 
+distance requirement, and \emph{second} the Metropolis-Hasting (MH) acceptance ratio evaluated for the 
+proposal is less than one. In the MH acceptance ratio, the likelihood is replaced with some transition 
+kernel. 
+
+Based on importance sampling, several modifications to this algorithm have been proposed. 
+These methods are called ABC Sequential Monte Carlo (ABC-SMC), or ABC Population Monte Carlo 
+(ABC-PMC). These algorithms rely on sampling a large set of parameters from the prior pdf, and assigning 
+equal weights to them as an initial step. In the subsequent steps, sampling is modified by 
+proposing intermediate distribution built from the previous sample of parameters and their 
+corresponding weights. Parameters are updated by sampling from the intermediate distribution 
+and are accepted if they pass the distance requirements. Furthermore, weights are updated according 
+to the intermediate distribution. 
+
+Talk about importance sampling here ...
+Sampling from the parameter space in ABC algorithm can become more efficient by 
+employing adaptive importance sampling... 
+
+\section{Method}
+
+\subsection{Approximate Bayesian Computation}
+
+\subsubsection{basics}
+
+Talk about generic abc ...
+
+\subsubsection{ABC with adaptive importance sampling}
+
+
+
+\subsection{Model of galaxy power spectrum}
+
+
+\subsubsection{Renormalized perturbation theory}
+
+\section{Data}
+
+\subsection{SDSS BOSS}
+
+\subsection{Measurements of galaxy-galaxy power spectrum}
+
+\section{Analysis}
+
+\section{Results}
+
+
+\begin{thebibliography}{70}
+
+\bibitem[Bertin \& Arnouts (1996)]{sex} Bertin, E., Arnouts, S. \ 1996  Astronomy and Astrophysics Supplement Series, 117, 393-40
+\bibitem[Cram\'{e}r (1946)]{cramer} Cram\'{e}r, H. \ 1946 Mathematical methods of statistics, Princeton university press
+\bibitem[Le Cam (1953)]{lecam} Le Cam, L. M. \ 1953 On some asymptotic properties of maximum likelihood estimates and related Bayes' estimates (Vol. 1, No. 11), University of California press
+\bibitem[Lupton etal. (2001)]{sdss} Lupton, R. etal. \ 2001  arXiv: astro-ph/0101420
+\bibitem[Schechter etal. (1993)]{dophot} Schechter, P. L., Mateo, M., Saha, A. \ 1993 \pasp, 1342-1353
+\bibitem[Stetson (1987)]{daophot} Stetson, P. B. \ 1987, \pasp, 191-222
+\bibitem[Trujillo etal. (2001)]{moffat} Trujillo, I., et al. \ 2001 \mnras, 977-985
+
+\end{thebibliography}
+
+
+\end{document}
