@@ -16,7 +16,6 @@ from distance import test_dist
 from parameters import Params
 
 def pmc_abc(data, 
-        prior_shape = 'uniform', 
         N = 1000,
         eps0 = 0.01, 
         T = 20
@@ -40,7 +39,6 @@ def pmc_abc(data,
         theta_star[1] = toolz.prior()[1].rvs(size=1)[0]
 	#print theta_star
         model = toolz.simulator( theta_star )
-        
 
         rho = test_dist(data[1], model(data[0]))
 
@@ -52,7 +50,7 @@ def pmc_abc(data,
             model = toolz.simulator( theta_star )
 
             rho = test_dist(data[1], model(data[0]))
-        
+         
         theta_t[:,i] = theta_star
 
         w_t[i] = 1.0/np.float(N)
@@ -70,7 +68,13 @@ def pmc_abc(data,
 
     fig = plt.figure(1)
     sub = fig.add_subplot(111)
-    sub.scatter(theta_t[0,:], theta_t[1,:], s = 10.**10.*w_t/w_t.sum() , alpha = 1. , color = 'b')
+    sub.scatter(
+            theta_t[0,:], 
+            theta_t[1,:], 
+            alpha = 1. , 
+            color = 'b'
+            )
+            #s = 10.**10.*w_t/w_t.sum() , 
     sub.set_xlim([-2. , 2.])
     sub.set_ylim([ 0. , 2.])
     sub.set_xlabel(r'$\mu$')
@@ -126,22 +130,29 @@ def pmc_abc(data,
             
             #print 'For loop ', time.time() - start_time
         
+        sig_t = 2.0 * np.cov(theta_t)
+        t += 1 
+        
         fig = plt.figure(1)
         sub = fig.add_subplot(111)
-    	sub.scatter(theta_t[0,:], theta_t[1,:], s = w_t/w_t.sum() , alpha = 0.5)
+    	sub.scatter(
+                theta_t[0,:], 
+                theta_t[1,:], 
+                alpha = 0.5
+                )
+        #        s = w_t/w_t.sum() , 
         sub.set_xlim([-2. , 2.])
         sub.set_ylim([ 0. , 2.])
         sub.set_xlabel(r'$\mu$')
         sub.set_ylabel(r'$\sigma$')
         plt.savefig("theta_scatter"+str(t)+".png")
+        plt.close()
 
-        sig_t = 2.0 * np.cov(theta_t)
         np.savetxt(
 		    ''.join(['theta_w_t', str(t), '.dat']), 
 		    np.c_[theta_t[0,:], theta_t[1,:], w_t ]
 		    )
 
-        t += 1 
         print t, ' ;D'
 
 def weighted_sampling(theta, w): 
@@ -169,11 +180,11 @@ if __name__=='__main__':
 
     sub.scatter(data_x, data_y)
     fig.savefig('data.png')
+    plt.close()
     
     pmc_abc(data, 
-        prior_shape = ['uniform', 'uniform'], 
         N = 1000,
-        eps0 = 10.0, 
+        eps0 = 5.0, 
         T=20
         )
     
