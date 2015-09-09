@@ -15,7 +15,7 @@ class Params(object):
             ): 
         """ Class that describes parameters
         """
-        
+
         self.prior_dict = prior_dict.copy() # dictionary that specifies prior info
 
     def prior(self): 
@@ -45,17 +45,6 @@ class Params(object):
                 priorz.append( norm( loc , scale ) )
 
         return priorz
-
-    def simulator(self, theta): 
-        """ Simulator 
-        """
-       
-        loc = theta[0]
-        scale = theta[1]
-
-        simz = norm(loc, scale)
-
-        return simz.pdf
 
 
 if __name__=="__main__": 

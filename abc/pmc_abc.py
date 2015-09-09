@@ -11,149 +11,193 @@ from scipy.stats import norm
 from scipy.stats import multivariate_normal
 import time 
 
-
+import triangle
 from distance import test_dist
 from parameters import Params
+from test_sim import simz
 
-def pmc_abc(data, 
-        N = 1000,
-        eps0 = 0.01, 
-        T = 20
-        ): 
-
-    start_time = time.time()
-
-    toolz = Params({
-                'mu': {'shape': 'gauss', 'mean': .0, 'stddev': 1.0}, 
-                'sigma': { 'shape': 'uniform', 'min': 0.0, 'max': 2.0}
-                })
-
-    t = 0 
-    theta_t = np.zeros((2, N))
-    w_t = np.zeros((N))
-
-    for i in xrange(N): 
-        
-        theta_star = np.zeros(2)
-        theta_star[0] = toolz.prior()[0].rvs(size=1)[0]
-        theta_star[1] = toolz.prior()[1].rvs(size=1)[0]
-	#print theta_star
-        model = toolz.simulator( theta_star )
-
-        rho = test_dist(data[1], model(data[0]))
-
-        while rho > eps0: 
-
-            theta_star[0] = toolz.prior()[0].rvs(size=1)[0]
-            theta_star[1] = toolz.prior()[1].rvs(size=1)[0]
-
-            model = toolz.simulator( theta_star )
-
-            rho = test_dist(data[1], model(data[0]))
-         
-        theta_t[:,i] = theta_star
-
-        w_t[i] = 1.0/np.float(N)
-
-    sig_t = 2.0 * np.cov( theta_t )    # covariance matrix
-    print sig_t
+class PmcAbc(object): 
     
-    # write out 
-    np.savetxt(
-            ''.join(['theta_w_t', str(t), '.dat']), 
-            np.c_[theta_t[0,:], theta_t[1,:], w_t ]
-            )
+    def __init__(self, data, N = 1000, eps0 = 0.01, T = 20): 
+        """ Class taht describes PMC-ABC 
+        """
+        self.data = data
+        self.N = N 
+        self.eps0 = eps0
+        self.T = T
+    
+    def prior_param(self, 
+            param_dict= {
+                    'mu': {'shape': 'uniform', 'min': -1, 'max': 1}, 
+                    'sigma': { 'shape': 'uniform', 'min': -2.0, 'max': 2.0}
+                    }): 
+        """ Pass priors of parameters in theta
+        """
 
-    print 'Initial Pool ', time.time() - start_time
+        self.param_obj = Params(param_dict)     # parameter object
 
-    fig = plt.figure(1)
-    sub = fig.add_subplot(111)
-    sub.scatter(
-            theta_t[0,:], 
-            theta_t[1,:], 
-            alpha = 1. , 
-            color = 'b'
-            )
-            #s = 10.**10.*w_t/w_t.sum() , 
-    sub.set_xlim([-2. , 2.])
-    sub.set_ylim([ 0. , 2.])
-    sub.set_xlabel(r'$\mu$')
-    sub.set_ylabel(r'$\sigma$')
-    plt.savefig("theta_scatter"+str(t)+".png")
-    plt.close()
+        self.param_names = param_dict.keys()
 
-    start_time = time.time()
+        self.n_params = len(param_dict.keys())  # number of parameters in theta
 
-    while t < T: 
-
-        eps_t = np.percentile(rho, 75)
-        print 'Epsilon t', eps_t
-
-        theta_t_1 = theta_t.copy()
-        w_t_1 = w_t.copy()
-        sig_t_1 = sig_t.copy()
-
-        for i in xrange(N): 
-            start_time = time.time()
-
-            theta_star = weighted_sampling( theta_t_1, w_t_1 ) 
-            theta_starstar = multivariate_normal( theta_star, sig_t_1 ).rvs(size=1)
-	    
-	    while theta_starstar[1] < 0 :
-		    theta_star = weighted_sampling( theta_t_1, w_t_1 )
-		    theta_starstar = multivariate_normal(theta_star, sig_t_1).rvs(size=1)
-	    #print theta_starstar
-            model_starstar = toolz.simulator( theta_starstar )
-            rho = test_dist(data[1], model_starstar(data[0])) 
+    def priors_sample(self): 
+        """ Sample from priors derived from parameter object
+        """
         
-            while rho > eps_t: 
+        theta_star = np.zeros(self.n_params)
 
-                theta_star = weighted_sampling( theta_t_1, w_t_1 )
-		 
-                theta_starstar = multivariate_normal(theta_star, sig_t_1).rvs(size=1)
-		while theta_starstar[1] < 0 :
-			theta_star = weighted_sampling( theta_t_1, w_t_1 )
-			theta_starstar = multivariate_normal(theta_star, sig_t_1).rvs(size=1)
-		#print theta_starstar
-                model_starstar = toolz.simulator( theta_starstar )
-                rho = test_dist(data[1], model_starstar(data[0])) 
+        for i in xrange(self.n_params): 
+            theta_star[i] = self.param_obj.prior()[i].rvs(size=1)[0]
 
-            #print theta_star, theta_starstar
-            theta_t[:,i] = theta_starstar
-	    #print sig_t_1
-	    p_theta = toolz.prior()[0].pdf(theta_t[0,i]) * toolz.prior()[1].pdf(theta_t[1,i])
-	    #print p_theta
-	    pos_t = np.dstack((theta_t_1[0,:],theta_t_1[1,:]))
-	    #print multivariate_normal(theta_t[:,i], sig_t_1).pdf(pos_t).shape , w_t_1.shape
-            w_t[i] = p_theta / np.sum(w_t_1 * multivariate_normal(theta_t[:,i], sig_t_1).pdf(pos_t))
-            #print test_dist(data[1], model_starstar(data[0])), w_t[i]
+        return theta_star
+                
+    
+    def prior_of_priors(self, tt): 
+        """ Multiply priors of multile dimensions
+        p(theta) = p(theta_0) * p(theta_1) * ... * p(theta_n_params)
+        """
+        for i in xrange(self.n_params): 
+            try: 
+                p_theta *= self.param_obj.prior()[i].pdf(tt[i])        
+            except UnboundLocalError: 
+                p_theta = self.param_obj.prior()[i].pdf(tt[i])        
             
-            #print 'For loop ', time.time() - start_time
+        return p_theta
+    
+    def initial_pool(self): 
+        """ Initial pool of pmc_abc
+        """
+
+        self.prior_param()  # first run prior parameters
+
+        self.t = 0 
+        self.theta_t = np.zeros((self.n_params, self.N))
+        self.w_t = np.zeros((self.N))
+        rhos = [] 
+
+        for i in xrange(self.N): 
+            
+            theta_star = self.priors_sample()
+    
+            model = simz( theta_star )
+            rho = test_dist(self.data, model)
+
+            while rho > self.eps0: 
+
+                theta_star = self.priors_sample()
+                
+                model = simz( theta_star )
+
+                rho = test_dist(self.data, model)
+             
+            self.theta_t[:,i] = theta_star
+
+            self.w_t[i] = 1.0/np.float(self.N)
+
+            rhos.append(rho)
+
+        self.sig_t = 2.0 * np.cov( self.theta_t )    # covariance matrix
+
+        self.writeout()
+        self.plotout()
+
+        return np.array(rhos)
+    
+    def pmc_abc(self): 
+        """
+        """
+
+        rhos = self.initial_pool()
+
+        while self.t < self.T: 
+
+            eps_t = np.percentile(rhos, 75)
+
+            print 'Epsilon t', eps_t
+
+            theta_t_1 = self.theta_t.copy()
+            w_t_1 = self.w_t.copy()
+            sig_t_1 = self.sig_t.copy()
+            rhos = [] 
+
+            for i in xrange(self.N): 
+
+                theta_star = weighted_sampling( theta_t_1, w_t_1 ) 
+                theta_starstar = multivariate_normal( theta_star, sig_t_1 ).rvs(size=1)
+               
+                model_starstar = simz( theta_starstar )
+
+                rho = test_dist(data, model_starstar) 
+            
+                while rho > eps_t: 
+
+                    theta_star = weighted_sampling( theta_t_1, w_t_1 )
+                    theta_starstar = multivariate_normal(theta_star, sig_t_1).rvs(size=1)
+
+                    model_starstar = simz( theta_starstar )
+
+                    rho = test_dist(data, model_starstar) 
+                
+                rhos.append(rho)
+
+                self.theta_t[:,i] = theta_starstar
+
+                p_theta = self.prior_of_priors(theta_starstar)
+                
+                pos_t = np.dstack(theta_t_1)
+                self.w_t[i] = p_theta / np.sum(w_t_1 * multivariate_normal(self.theta_t[:,i], sig_t_1).pdf(pos_t))
         
-        sig_t = 2.0 * np.cov(theta_t)
-        t += 1 
-        
-        fig = plt.figure(1)
-        sub = fig.add_subplot(111)
-    	sub.scatter(
-                theta_t[0,:], 
-                theta_t[1,:], 
-                alpha = 0.5
-                )
-        #        s = w_t/w_t.sum() , 
-        sub.set_xlim([-2. , 2.])
-        sub.set_ylim([ 0. , 2.])
-        sub.set_xlabel(r'$\mu$')
-        sub.set_ylabel(r'$\sigma$')
-        plt.savefig("theta_scatter"+str(t)+".png")
-        plt.close()
+            self.sig_t = 2.0 * np.cov(self.theta_t)
+            self.t += 1 
+            
+            self.writeout()
+
+            self.plotout()
+
+        return None
+    
+    def writeout(self): 
+        """ Write out theta_t and w_t
+        """
+
+        out_file = ''.join(['theta_w_t', str(self.t), '.dat'])
+
+        data_list = [] 
+        for i in xrange(self.n_params): 
+            data_list.append( self.theta_t[i,:] ) 
+        data_list.append(self.w_t)
 
         np.savetxt(
-		    ''.join(['theta_w_t', str(t), '.dat']), 
-		    np.c_[theta_t[0,:], theta_t[1,:], w_t ]
-		    )
+                out_file, 
+                (np.vstack(np.array(data_list))).T, 
+                delimiter='\t'
+                )
 
-        print t, ' ;D'
+        return None 
+
+    def plotout(self): 
+        """ Triangle plot the things 
+        """
+        figure = triangle.corner(
+               (self.theta_t).T, 
+               labels = self.param_names, 
+               weights = self.w_t, 
+               show_titles=True, 
+               range = [[-2,2],[0,1]], 
+               title_args={"fontsize": 12}
+               ) 
+    
+        figure.gca().annotate(
+                str(self.t), 
+                xy=(0.5, 1.0), 
+                xycoords="figure fraction",
+                xytext=(0, -5), 
+                textcoords="offset points",
+                ha="center", 
+                va="top"
+                ) 
+        figure.savefig("triangle_theta_t"+str(self.t)+".png")
+        plt.close()
 
 def weighted_sampling(theta, w): 
     """ Weighted sampling
@@ -173,18 +217,13 @@ if __name__=='__main__':
     # fake data
     data_x = uniform( -1.0, 2.0).rvs(size=1000)
     data_y = norm(0.0, 1.0).pdf(data_x)
-    data = [data_x, data_y]
+    data = {'input': data_x, 'output': data_y}
 
     fig = plt.figure(1)
     sub = fig.add_subplot(111)
-
     sub.scatter(data_x, data_y)
     fig.savefig('data.png')
     plt.close()
     
-    pmc_abc(data, 
-        N = 1000,
-        eps0 = 5.0, 
-        T=20
-        )
-    
+    pmcabc_test = PmcAbc(data, N=5000, eps0 = 2.0, T = 10)
+    pmcabc_test.pmc_abc()
