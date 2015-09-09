@@ -6,6 +6,7 @@ Parameters
 from scipy.stats import uniform
 from scipy.stats import norm 
 from scipy.stats import multivariate_normal
+import numpy as np
 
 class Params(object): 
 
@@ -52,7 +53,7 @@ class Params(object):
         loc = theta[0]
         scale = theta[1]
 
-        simz = multivariate_normal(loc, scale)
+        simz = norm(loc, scale)
 
         return simz.pdf
 
@@ -67,7 +68,8 @@ if __name__=="__main__":
     print prz_mu.pdf(0.0)
     print prz_sigma.rvs(size=100)
     print prz_sigma.pdf(0.0)
-
-    theta_t = np.zeros((2, N))
+    w = parz.simulator([0, 1])
+    print w(0)
+    #theta_t = np.zeros((2, N))
 
 
