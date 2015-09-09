@@ -10,6 +10,8 @@ from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.stats import multivariate_normal
 import time 
+import multiprocessing as mp 
+import interruptible_pool as pewl
 
 import triangle
 from distance import test_dist
@@ -18,13 +20,14 @@ from test_sim import simz
 
 class PmcAbc(object): 
     
-    def __init__(self, data, N = 1000, eps0 = 0.01, T = 20): 
+    def __init__(self, data, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10): 
         """ Class taht describes PMC-ABC 
         """
         self.data = data
         self.N = N 
         self.eps0 = eps0
         self.T = T
+        self.Nthreads = Nthreads
     
     def prior_param(self, 
             param_dict= {
@@ -95,13 +98,50 @@ class PmcAbc(object):
             self.w_t[i] = 1.0/np.float(self.N)
 
             rhos.append(rho)
-
+        
+        self.rhos = rhos
         self.sig_t = 2.0 * np.cov( self.theta_t )    # covariance matrix
 
         self.writeout()
         self.plotout()
 
         return np.array(rhos)
+
+    def importance_sampling(self, params): 
+        """ Wrapper for parallized importance sampling
+        """
+
+        theta_t_1 = params[0]
+        w_t_1 = params[1]
+        sig_t_1 = params[2]
+        i = params[3]
+
+        theta_star = weighted_sampling( theta_t_1, w_t_1 ) 
+        theta_starstar = multivariate_normal( theta_star, sig_t_1 ).rvs(size=1)
+       
+        model_starstar = simz( theta_starstar )
+
+        rho = test_dist(data, model_starstar) 
+    
+        while rho > eps_t: 
+
+            theta_star = weighted_sampling( theta_t_1, w_t_1 )
+            theta_starstar = multivariate_normal(theta_star, sig_t_1).rvs(size=1)
+
+            model_starstar = simz( theta_starstar )
+
+            rho = test_dist(data, model_starstar) 
+        
+        self.rhos[i] = rho
+
+        self.theta_t[:,i] = theta_starstar
+
+        p_theta = self.prior_of_priors(theta_starstar)
+        
+        pos_t = np.dstack(theta_t_1)
+        self.w_t[i] = p_theta / np.sum(w_t_1 * multivariate_normal(self.theta_t[:,i], sig_t_1).pdf(pos_t))
+        
+        return None 
     
     def pmc_abc(self): 
         """
@@ -119,34 +159,21 @@ class PmcAbc(object):
             w_t_1 = self.w_t.copy()
             sig_t_1 = self.sig_t.copy()
             rhos = [] 
-
-            for i in xrange(self.N): 
-
-                theta_star = weighted_sampling( theta_t_1, w_t_1 ) 
-                theta_starstar = multivariate_normal( theta_star, sig_t_1 ).rvs(size=1)
-               
-                model_starstar = simz( theta_starstar )
-
-                rho = test_dist(data, model_starstar) 
             
-                while rho > eps_t: 
+            pool = pewl(self.Nthreads)
+            mapfn = pool.map
 
-                    theta_star = weighted_sampling( theta_t_1, w_t_1 )
-                    theta_starstar = multivariate_normal(theta_star, sig_t_1).rvs(size=1)
+            args_list = [ 
+                    [ theta_t_1, w_t_1, sig_t_1, i ] 
+                    for i in xrange(self.N)
+                    ] 
 
-                    model_starstar = simz( theta_starstar )
+            mapfn(self.importance_sampling, args_list)
 
-                    rho = test_dist(data, model_starstar) 
-                
-                rhos.append(rho)
+            pool.close()
+            pool.terminate()
+            pool.join()
 
-                self.theta_t[:,i] = theta_starstar
-
-                p_theta = self.prior_of_priors(theta_starstar)
-                
-                pos_t = np.dstack(theta_t_1)
-                self.w_t[i] = p_theta / np.sum(w_t_1 * multivariate_normal(self.theta_t[:,i], sig_t_1).pdf(pos_t))
-        
             self.sig_t = 2.0 * np.cov(self.theta_t)
             self.t += 1 
             
