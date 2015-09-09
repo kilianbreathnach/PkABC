@@ -17,7 +17,7 @@ import triangle
 from distance import test_dist
 from parameters import Params
 from test_sim import simz
-
+    
 class PmcAbc(object): 
     
     def __init__(self, data, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10): 
@@ -114,7 +114,8 @@ class PmcAbc(object):
         theta_t_1 = params[0]
         w_t_1 = params[1]
         sig_t_1 = params[2]
-        i = params[3]
+        eps_t = params[3]
+        i = params[4]
 
         theta_star = weighted_sampling( theta_t_1, w_t_1 ) 
         theta_starstar = multivariate_normal( theta_star, sig_t_1 ).rvs(size=1)
@@ -147,28 +148,27 @@ class PmcAbc(object):
         """
         """
 
-        rhos = self.initial_pool()
+        self.rhos = self.initial_pool()
 
         while self.t < self.T: 
 
-            eps_t = np.percentile(rhos, 75)
+            eps_t = np.percentile(self.rhos, 75)
 
             print 'Epsilon t', eps_t
 
             theta_t_1 = self.theta_t.copy()
             w_t_1 = self.w_t.copy()
             sig_t_1 = self.sig_t.copy()
-            rhos = [] 
             
-            pool = pewl(self.Nthreads)
+            pool = pewl.InterruptiblePool(self.Nthreads)
             mapfn = pool.map
 
             args_list = [ 
-                    [ theta_t_1, w_t_1, sig_t_1, i ] 
+                    ( theta_t_1, w_t_1, sig_t_1, eps_t, i )
                     for i in xrange(self.N)
                     ] 
-
-            mapfn(self.importance_sampling, args_list)
+            self.importance_sampling(args_list[0])
+            mapfn(self.importance_sampling, [arg for arg in args_list])
 
             pool.close()
             pool.terminate()
@@ -252,5 +252,5 @@ if __name__=='__main__':
     fig.savefig('data.png')
     plt.close()
     
-    pmcabc_test = PmcAbc(data, N=5000, eps0 = 2.0, T = 10)
+    pmcabc_test = PmcAbc(data, N=100, eps0 = 2.0, T = 10, Nthreads=10)
     pmcabc_test.pmc_abc()
