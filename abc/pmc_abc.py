@@ -70,8 +70,12 @@ def pmc_abc(data,
 
     fig = plt.figure(1)
     sub = fig.add_subplot(111)
-    sub.hist2d(theta_t[0,:], theta_t[1,:], weights=w_t, bins=100, range=[[-2.0, 2.0],[0.0, 2.0]])
-    plt.savefig("theta0.png")
+    sub.scatter(theta_t[0,:], theta_t[1,:], s = 10.**10.*w_t/w_t.sum() , alpha = 1. , color = 'b')
+    sub.set_xlim([-2. , 2.])
+    sub.set_ylim([ 0. , 2.])
+    sub.set_xlabel(r'$\mu$')
+    sub.set_ylabel(r'$\sigma$')
+    plt.savefig("theta_scatter"+str(t)+".png")
     plt.close()
 
     start_time = time.time()
@@ -124,9 +128,12 @@ def pmc_abc(data,
         
         fig = plt.figure(1)
         sub = fig.add_subplot(111)
-    	sub.hist2d(theta_t[0,:], theta_t[1,:], weights=w_t, bins=100, range=[[-2.0, 2.0],[0.0, 2.0]])
-       
-        plt.savefig("theta"+str(t)+".png")
+    	sub.scatter(theta_t[0,:], theta_t[1,:], s = w_t/w_t.sum() , alpha = 0.5)
+        sub.set_xlim([-2. , 2.])
+        sub.set_ylim([ 0. , 2.])
+        sub.set_xlabel(r'$\mu$')
+        sub.set_ylabel(r'$\sigma$')
+        plt.savefig("theta_scatter"+str(t)+".png")
 
         sig_t = 2.0 * np.cov(theta_t)
         np.savetxt(
