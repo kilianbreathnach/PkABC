@@ -151,7 +151,6 @@ def weighted_sampling(theta, w):
 
     return closest_theta 
 
-
 if __name__=='__main__': 
     # fake data
     data_x = uniform( -1.0, 2.0).rvs(size=1000)
