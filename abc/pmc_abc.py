@@ -10,14 +10,18 @@ from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.stats import multivariate_normal
 import time 
-import multiprocessing as mp 
-import interruptible_pool as pewl
 
 import triangle
 from distance import test_dist
 from parameters import Params
 from test_sim import simz
-    
+
+from interruptible_pool import InterruptiblePool
+
+def unwrap_self_importance_sampling(arg, **kwarg):
+
+    return PmcAbc.importance_sampling(*arg, **kwarg)
+
 class PmcAbc(object): 
     
     def __init__(self, data, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10): 
@@ -66,7 +70,8 @@ class PmcAbc(object):
                 p_theta = self.param_obj.prior()[i].pdf(tt[i])        
             
         return p_theta
-    
+
+
     def initial_pool(self): 
         """ Initial pool of pmc_abc
         """
@@ -105,7 +110,8 @@ class PmcAbc(object):
         self.writeout()
         self.plotout()
 
-        return np.array(rhos)
+        return np.array(rhos)    
+
 
     def importance_sampling(self, params): 
         """ Wrapper for parallized importance sampling
@@ -160,16 +166,15 @@ class PmcAbc(object):
             w_t_1 = self.w_t.copy()
             sig_t_1 = self.sig_t.copy()
             
-            pool = pewl.InterruptiblePool(self.Nthreads)
+            pool = InterruptiblePool(self.Nthreads)
             mapfn = pool.map
 
             args_list = [ 
                     ( theta_t_1, w_t_1, sig_t_1, eps_t, i )
                     for i in xrange(self.N)
                     ] 
-            self.importance_sampling(args_list[0])
-            mapfn(self.importance_sampling, [arg for arg in args_list])
-
+            mapfn(unwrap_self_importance_sampling, zip([self]*len(args_list), args_list))
+	    
             pool.close()
             pool.terminate()
             pool.join()
@@ -252,5 +257,5 @@ if __name__=='__main__':
     fig.savefig('data.png')
     plt.close()
     
-    pmcabc_test = PmcAbc(data, N=100, eps0 = 2.0, T = 10, Nthreads=10)
+    pmcabc_test = PmcAbc(data, N=100, eps0 = 2.0, T = 10)
     pmcabc_test.pmc_abc()
