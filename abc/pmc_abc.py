@@ -131,14 +131,8 @@ class PmcAbc(object):
             model = simz( theta_star )
 
             rho = test_dist(self.data, model)
-             
-        self.theta_t[:,i] = theta_star
-        self.w_t[i] = 1.0/np.float(self.N)  
-        self.rhos[i] = rho
-        
-	print i, self.theta_t[:,i], self.w_t[i], self.rhos[i]
-        
-	return None   
+
+	return np.array([np.int(i), theta_star[0] , theta_star[1] , 1./np.float(self.N), rho])   
 
     def initial_pool(self):
         """
@@ -155,13 +149,16 @@ class PmcAbc(object):
         mapfn = pool.map
         args_list = [(i) for i in xrange(self.N)]
 	x = zip([self]*len(args_list), args_list)
-        mapfn(unwrap_self_initial_sampling, zip([self]*len(args_list), args_list))
+        results = mapfn(unwrap_self_initial_sampling, zip([self]*len(args_list), args_list))
         pool.close()
         pool.terminate()
         pool.join()
         
-        print self.rhos
-        print self.theta_t
+ 	pars = np.array(results)
+        self.theta_t = pars[:,1:3].reshape((2,self.N))
+        self.w_t     = pars[:,3].reshape((self.N))
+        self.rhos    = pars[:,4].reshape((self.N)) 
+     
 
         self.sig_t = 2.0 * np.cov( self.theta_t )    # covariance matrix
 
@@ -205,7 +202,7 @@ class PmcAbc(object):
         pos_t = np.dstack(theta_t_1)
         self.w_t[i] = p_theta / np.sum(w_t_1 * multivariate_normal(self.theta_t[:,i], sig_t_1).pdf(pos_t))
         
-        return None 
+        return  np.array([np.int(i), theta_starstar[0] , theta_starstar[1], self.w_t[i], rho]) 
     
     def pmc_abc(self): 
         """
@@ -230,10 +227,13 @@ class PmcAbc(object):
                     ( theta_t_1, w_t_1, sig_t_1, eps_t, i )
                     for i in xrange(self.N)
                     ] 
-            #self.importance_sampling(args_list[0])
-	    #pool.map(unwrap_self_f, zip([self]*len(names), names))
-            mapfn(unwrap_self_importance_sampling, zip([self]*len(args_list), args_list))
+            results = mapfn(unwrap_self_importance_sampling, zip([self]*len(args_list), args_list))
 	    
+ 	    pars = np.array(results)
+            self.theta_t = pars[:,1:3].reshape((2,self.N))
+            self.w_t     = pars[:,3].reshape((self.N))
+            self.rhos    = pars[:,4].reshape((self.N))
+ 
             pool.close()
             pool.terminate()
             pool.join()
