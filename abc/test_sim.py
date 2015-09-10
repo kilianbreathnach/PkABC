@@ -12,6 +12,6 @@ def simz(theta):
     loc = theta[0]
     scale = theta[1]
 
-    simz = norm(loc, 10.0**scale)
+    simz = norm(loc, scale)
 
     return simz.pdf
