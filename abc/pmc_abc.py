@@ -22,6 +22,11 @@ def unwrap_self_importance_sampling(arg, **kwarg):
 
     return PmcAbc.importance_sampling(*arg, **kwarg)
 
+def unwrap_self_initial_sampling(arg, **kwarg):
+    
+    return PmcAbc.importance_sampling(*arg, **kwarg)
+
+
 class PmcAbc(object): 
     
     def __init__(self, data, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10): 
@@ -70,12 +75,9 @@ class PmcAbc(object):
                 p_theta = self.param_obj.prior()[i].pdf(tt[i])        
             
         return p_theta
-
-
+    
+    """
     def initial_pool(self): 
-        """ Initial pool of pmc_abc
-        """
-
         self.prior_param()  # first run prior parameters
 
         self.t = 0 
@@ -110,11 +112,60 @@ class PmcAbc(object):
         self.writeout()
         self.plotout()
 
-        return np.array(rhos)    
+        return np.array(rhos)   
+    """
 
+    def initial_sampling(self, i):
+        """Wrapper for parallelized initial pool sampling
+        """
 
+        theta_star = self.priors_sample()
+        model = simz( theta_star )
+        rho = test_dist(self.data, model)
+
+        while rho > self.eps0: 
+
+            theta_star = self.priors_sample()
+                
+            model = simz( theta_star )
+
+            rho = test_dist(self.data, model)
+             
+        self.theta_t[:,i] = theta_star
+        self.w_t[i] = 1.0/np.float(self.N)  
+        self.rhos[i] = rho
+
+        return None   
+
+    def initial_pool(self):
+        """
+        Creating the initial pool
+        """
+        self.prior_param()  # first run prior parameters
+
+        self.t = 0 
+        self.theta_t = np.zeros((self.n_params, self.N))
+        self.w_t = np.zeros((self.N))
+        rhos = np.zeros((self.N)) 
+
+        pool = InterruptiblePool(self.Nthreads)    
+        mapfn = pool.map
+        args_list = [(i) for i in xrange(self.N)]
+        mapfn(unwrap_self_initial_sampling, zip([self]*len(args_list), args_list))
+     
+        pool.close()
+        pool.terminate()
+        pool.join()
+           
+        self.sig_t = 2.0 * np.cov( self.theta_t )    # covariance matrix
+
+        self.writeout()
+        self.plotout()
+
+        return np.array(rhos)   
+        
     def importance_sampling(self, params): 
-        """ Wrapper for parallized importance sampling
+        """ Wrapper for parallelized importance sampling
         """
 
         theta_t_1 = params[0]
@@ -173,6 +224,8 @@ class PmcAbc(object):
                     ( theta_t_1, w_t_1, sig_t_1, eps_t, i )
                     for i in xrange(self.N)
                     ] 
+            #self.importance_sampling(args_list[0])
+	    #pool.map(unwrap_self_f, zip([self]*len(names), names))
             mapfn(unwrap_self_importance_sampling, zip([self]*len(args_list), args_list))
 	    
             pool.close()
