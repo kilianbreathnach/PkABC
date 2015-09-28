@@ -11,7 +11,7 @@ from scipy.stats import norm
 from scipy.stats import multivariate_normal
 import time 
 
-import triangle
+import corner 
 from distance import test_dist
 from parameters import Params
 from simulator import Simul
@@ -256,8 +256,13 @@ class PmcAbc(object):
             plt.close()
 
         elif plot_type == 'scatter': 
+    
+            figure = plt.figure(1)
+            sub = figure.add_subplot(111)
+            sub.scatter(self.theta_t[0,:], self.theta_t[1,:]) 
 
-            figure = triangle.corner(
+            """
+            figure = corner(
                    (self.theta_t).T, 
                    labels = self.param_names, 
                    weights = self.w_t, 
@@ -274,6 +279,7 @@ class PmcAbc(object):
                     ha="center", 
                     va="top"
                     ) 
+            """
             figure.savefig("triangle_theta_t"+str(self.t)+".png")
             plt.close()
 
@@ -307,5 +313,5 @@ if __name__=='__main__':
     modeel = Simul()
     simz = modeel.nz
 
-    pmcabc_test = PmcAbc(data, N=100, eps0 = 0.005, T = 10, Nthreads=3)
+    pmcabc_test = PmcAbc(data, N=100, eps0 = 0.001, T = 10, Nthreads=3)
     pmcabc_test.pmc_abc()
