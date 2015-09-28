@@ -14,7 +14,7 @@ import time
 import triangle
 from distance import test_dist
 from parameters import Params
-from test_sim import simz
+from simulator import Simul
 
 from interruptible_pool import InterruptiblePool
 
@@ -36,11 +36,11 @@ class PmcAbc(object):
         self.eps0 = eps0
         self.T = T
         self.Nthreads = Nthreads
-    
+
     def prior_param(self, 
             param_dict= {
-                    'mu': {'shape': 'uniform', 'min': -0.5, 'max': 0.5}, 
-                    'sigma': { 'shape': 'uniform', 'min': 0.9, 'max': 1.1}
+                    'sigma': {'shape': 'uniform', 'min': 0.1, 'max': 0.4}, 
+                    'm_min': { 'shape': 'uniform', 'min': 11.0, 'max': 13.0}
                     }): 
         """ Pass priors of parameters in theta
         """
@@ -230,7 +230,7 @@ class PmcAbc(object):
 
         return None 
 
-    def plotout(self, plot_type = 'triangle'): 
+    def plotout(self, plot_type = 'scatter'): 
         """ Triangle plot the things 
         """
         if plot_type == 'triangle': 
@@ -293,15 +293,19 @@ def weighted_sampling(theta, w):
 
 if __name__=='__main__': 
     # fake data
-    data_x = uniform( -1.0, 2.0).rvs(size=1000)
-    data_y = norm(0.0, 1.0).pdf(data_x)
-    data = {'input': data_x, 'output': data_y}
+    #data_x = uniform( -1.0, 2.0).rvs(size=1000)
+    #data_y = norm(0.0, 1.0).pdf(data_x)
+    #data = {'input': data_x, 'output': data_y}
 
-    fig = plt.figure(1)
-    sub = fig.add_subplot(111)
-    sub.scatter(data_x, data_y)
-    fig.savefig('data.png')
-    plt.close()
-    
-    pmcabc_test = PmcAbc(data, N=1000, eps0 = 2.0, T = 10, Nthreads=3)
+    #fig = plt.figure(1)
+    #sub = fig.add_subplot(111)
+    #sub.scatter(data_x, data_y)
+    #fig.savefig('data.png')
+    #plt.close()
+    data = {'output': 0.0047808 }
+        
+    modeel = Simul()
+    simz = modeel.nz
+
+    pmcabc_test = PmcAbc(data, N=100, eps0 = 0.005, T = 10, Nthreads=3)
     pmcabc_test.pmc_abc()

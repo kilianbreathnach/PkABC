@@ -10,7 +10,7 @@ import warnings
 def test_dist( 
         data, 
         model, 
-        disttype = 'dumb'
+        disttype = 'halotool_nz'
         ): 
     ''' Calculate distance between data set D and D_s from model 
 
@@ -35,4 +35,10 @@ def test_dist(
         
         dist = rho_mean + rho_sigma
 
+    elif disttype == 'halotool_nz': 
+        data_out = data['output']
+        dist = data_out - model
+
     return dist
+
+
