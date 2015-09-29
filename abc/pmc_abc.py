@@ -9,10 +9,10 @@ plt.switch_backend('agg')
 from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.stats import multivariate_normal
-import time 
+import time
 import warning
 
-import corner 
+import corner
 from distance import test_dist
 from parameters import Params
 from simulator import Simul
@@ -24,25 +24,27 @@ def unwrap_self_importance_sampling(arg, **kwarg):
     return PmcAbc.importance_sampling(*arg, **kwarg)
 
 def unwrap_self_initial_sampling(arg, **kwarg):
-    
+
     return PmcAbc.initial_sampling(*arg, **kwarg)
 
-class PmcAbc(object): 
-    
-    def __init__(self, data, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10): 
-        """ Class taht describes PMC-ABC 
+class PmcAbc(object):
+
+    def __init__(self, data, simulator, prior, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10):
+        """ Class taht describes PMC-ABC
         """
         self.data = data
-        self.N = N 
+        self.simulator = simulator
+        self.prior = prior
+        self.N = N
         self.eps0 = eps0
         self.T = T
         self.Nthreads = Nthreads
 
-    def prior_param(self, 
+    def prior_param(self,
             param_dict= {
-                    'sigma': {'shape': 'uniform', 'min': 0.1, 'max': 0.4}, 
+                    'sigma': {'shape': 'uniform', 'min': 0.1, 'max': 0.4},
                     'm_min': { 'shape': 'uniform', 'min': 11.0, 'max': 13.0}
-                    }): 
+                    }):
         """ Pass priors of parameters in theta
         """
 
@@ -52,57 +54,57 @@ class PmcAbc(object):
 
         self.n_params = len(param_dict.keys())  # number of parameters in theta
 
-    def priors_sample(self): 
+    def priors_sample(self):
         """ Sample from priors derived from parameter object
         """
-        
+
         theta_star = np.zeros(self.n_params)
 
-        for i in xrange(self.n_params): 
+        for i in xrange(self.n_params):
             np.random.seed()
             theta_star[i] = self.param_obj.prior()[i].rvs(size=1)[0]
 
         return theta_star
-                
-    
-    def prior_of_priors(self, tt): 
+
+
+    def prior_of_priors(self, tt):
         """ Multiply priors of multile dimensions
         p(theta) = p(theta_0) * p(theta_1) * ... * p(theta_n_params)
         """
-        for i in xrange(self.n_params): 
-            try: 
-                p_theta *= self.param_obj.prior()[i].pdf(tt[i])        
-            except UnboundLocalError: 
-                p_theta = self.param_obj.prior()[i].pdf(tt[i])        
-            
+        for i in xrange(self.n_params):
+            try:
+                p_theta *= self.param_obj.prior()[i].pdf(tt[i])
+            except UnboundLocalError:
+                p_theta = self.param_obj.prior()[i].pdf(tt[i])
+
         return p_theta
-    
+
     def initial_sampling(self, params):
         """Wrapper for parallelized initial pool sampling
         """
         i = params
-        
+
         theta_star = self.priors_sample()
-        model = simz( theta_star )
+        model = simulator.predict( theta_star )
         rho = test_dist(self.data, model)
 
-        while rho > self.eps0: 
+        while rho > self.eps0:
 
             theta_star = self.priors_sample()
-                
-            model = simz( theta_star )
+
+            model = simulator.predict( theta_star )
 
             rho = test_dist(self.data, model)
-        
+
         data_list = [np.int(i)]
 
-        for i_param in xrange(self.n_params): 
+        for i_param in xrange(self.n_params):
             data_list.append(theta_star[i_param])
 
         data_list.append(1./np.float(self.N))
         data_list.append(rho)
 
-	return np.array(data_list)   
+	return np.array(data_list)
 
     def initial_pool(self):
         """
@@ -110,12 +112,12 @@ class PmcAbc(object):
         """
         self.prior_param()  # first run prior parameters
 
-        self.t = 0 
+        self.t = 0
         self.theta_t = np.zeros((self.n_params, self.N))
         self.w_t = np.zeros((self.N))
-        self.rhos = np.zeros((self.N)) 
-    
-        pool = InterruptiblePool(self.Nthreads)    
+        self.rhos = np.zeros((self.N))
+
+        pool = InterruptiblePool(self.Nthreads)
         mapfn = pool.map
         args_list = [(i) for i in xrange(self.N)]
         unwrap_self_initial_sampling(zip([self]*len(args_list), args_list)[0])
@@ -123,64 +125,64 @@ class PmcAbc(object):
         pool.close()
         pool.terminate()
         pool.join()
-        
+
  	pars = np.array(results).T
         self.theta_t = pars[1:self.n_params+1,:]
         self.w_t     = pars[self.n_params+1,:]
         self.rhos    = pars[self.n_params+2,:]
-        
+
         self.sig_t = 2.0 * np.cov( self.theta_t )    # covariance matrix
 
         self.writeout()
         self.plotout()
 
-        return np.array(self.rhos)   
-        
-    def importance_sampling(self, params): 
+        return np.array(self.rhos)
+
+    def importance_sampling(self, params):
         """ Wrapper for parallelized importance sampling
         """
 
         i_part = params
 
-        theta_star = weighted_sampling( self.theta_t_1, self.w_t_1 ) 
+        theta_star = weighted_sampling( self.theta_t_1, self.w_t_1 )
         np.random.seed()
         theta_starstar = multivariate_normal( theta_star, self.sig_t_1 ).rvs(size=1)
-       
-        model_starstar = simz( theta_starstar )
 
-        rho = test_dist(data, model_starstar) 
-    
-        while rho > self.eps_t: 
+        model_starstar = simulator.predict( theta_starstar )
+
+        rho = test_dist(data, model_starstar)
+
+        while rho > self.eps_t:
 
             theta_star = weighted_sampling( self.theta_t_1, self.w_t_1 )
             theta_starstar = multivariate_normal(theta_star, self.sig_t_1).rvs(size=1)
 
-            model_starstar = simz( theta_starstar )
+            model_starstar = simulator.predict( theta_starstar )
 
-            rho = test_dist(data, model_starstar) 
+            rho = test_dist(data, model_starstar)
 
         #print theta_star, theta_starstar
 
         p_theta = self.prior_of_priors(theta_starstar)
-        
+
         pos_t = np.dstack(self.theta_t_1)
         tmp_w_t = p_theta / np.sum(self.w_t_1 * multivariate_normal(self.theta_t[:,i_part], self.sig_t_1).pdf(pos_t))
-        
+
         data_list = [np.int(i_part)]
-        for i_param in xrange(self.n_params): 
+        for i_param in xrange(self.n_params):
             data_list.append(theta_starstar[i_param])
         data_list.append(tmp_w_t)
         data_list.append(rho)
-        
-        return  np.array(data_list) 
-    
-    def pmc_abc(self): 
+
+        return  np.array(data_list)
+
+    def pmc_abc(self):
         """
         """
 
         self.rhos = self.initial_pool()
 
-        while self.t < self.T: 
+        while self.t < self.T:
 
             self.eps_t = np.percentile(self.rhos, 75)
 
@@ -189,106 +191,106 @@ class PmcAbc(object):
             self.theta_t_1 = self.theta_t.copy()
             self.w_t_1 = self.w_t.copy()
             self.sig_t_1 = self.sig_t.copy()
-            
+
             pool = InterruptiblePool(self.Nthreads)
             mapfn = pool.map
-            args_list = [ i for i in xrange(self.N) ] 
+            args_list = [ i for i in xrange(self.N) ]
             results = mapfn(unwrap_self_importance_sampling, zip([self]*len(args_list), args_list))
 
             pool.close()
             pool.terminate()
             pool.join()
-	    
+
             pars = np.array(results).T
             self.theta_t = pars[1:self.n_params+1,:].copy()
             self.w_t     = pars[self.n_params+1,:].copy()
             self.rhos    = pars[self.n_params+2,:].copy()
 
             self.sig_t = 2.0 * np.cov(self.theta_t)
-            self.t += 1 
-            
+            self.t += 1
+
             self.writeout()
 
             self.plotout()
 
         return None
-    
-    def writeout(self): 
+
+    def writeout(self):
         """ Write out theta_t and w_t
         """
 
         out_file = ''.join(['theta_w_t', str(self.t), '.dat'])
 
-        data_list = [] 
-        for i in xrange(self.n_params): 
-            data_list.append( self.theta_t[i,:] ) 
+        data_list = []
+        for i in xrange(self.n_params):
+            data_list.append( self.theta_t[i,:] )
         data_list.append(self.w_t)
 
         np.savetxt(
-                out_file, 
-                (np.vstack(np.array(data_list))).T, 
+                out_file,
+                (np.vstack(np.array(data_list))).T,
                 delimiter='\t'
                 )
 
-        return None 
+        return None
 
-    def plotout(self, plot_type = 'scatter'): 
-        """ Triangle plot the things 
+    def plotout(self, plot_type = 'scatter'):
+        """ Triangle plot the things
         """
-        if plot_type == 'triangle': 
+        if plot_type == 'triangle':
             # Clunky based on which version of corner.py you have
             # Clunky based on which version of corner.py you have
             # Clunky based on which version of corner.py you have
             # Clunky based on which version of corner.py you have
             figure = triangle.corner(
-                   (self.theta_t).T, 
-                   labels = self.param_names, 
-                   weights = self.w_t, 
-                   show_titles=True, 
+                   (self.theta_t).T,
+                   labels = self.param_names,
+                   weights = self.w_t,
+                   show_titles=True,
                    title_args={"fontsize": 12},
                    smooth=False
-                   ) 
-        
+                   )
+
             figure.gca().annotate(
-                    str(self.t), 
-                    xy=(0.5, 1.0), 
+                    str(self.t),
+                    xy=(0.5, 1.0),
                     xycoords="figure fraction",
-                    xytext=(0, -5), 
+                    xytext=(0, -5),
                     textcoords="offset points",
-                    ha="center", 
+                    ha="center",
                     va="top"
-                    ) 
+                    )
             figure.savefig("triangle_theta_t"+str(self.t)+".png")
             plt.close()
 
-        elif plot_type == 'scatter': 
-            
-            if len(self.theta_i[:,0]) != 2: 
+        elif plot_type == 'scatter':
+
+            if len(self.theta_i[:,0]) != 2:
                 warnings.warn("Can only plot two axes on scatter plot. No plot generated")
-                return 
+                return
 
             figure = plt.figure(1)
             sub = figure.add_subplot(111)
-            sub.scatter(self.theta_t[0,:], self.theta_t[1,:]) 
+            sub.scatter(self.theta_t[0,:], self.theta_t[1,:])
 
             figure.savefig("scatter_theta_t"+str(self.t)+".png")
             plt.close()
 
-def weighted_sampling(theta, w): 
+def weighted_sampling(theta, w):
     """ Weighted sampling
     """
 
     w_cdf = w.cumsum()/w.sum()
-    
+
     np.random.seed()
     rand1 = np.random.random(1)
     cdf_closest_index = np.argmin(np.abs(w_cdf - rand1))
     #min(xrange(len(w_cdf)), key = lambda iii: abs(w_cdf[iii]-rand1[0]))
     closest_theta = theta[:,cdf_closest_index]
 
-    return closest_theta 
+    return closest_theta
 
-if __name__=='__main__': 
+if __name__=='__main__':
     # fake data
     #data_x = uniform( -1.0, 2.0).rvs(size=1000)
     #data_y = norm(0.0, 1.0).pdf(data_x)
@@ -300,7 +302,7 @@ if __name__=='__main__':
     #fig.savefig('data.png')
     #plt.close()
     data = {'output': 0.0047808 }
-        
+
     modeel = Simul()
     simz = modeel.nz
 
