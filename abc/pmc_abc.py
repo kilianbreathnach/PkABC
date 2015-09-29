@@ -1,58 +1,42 @@
-'''
-
-PMC-ABC
-
-'''
+import time
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.stats import multivariate_normal
-import time
-import warning
-
+from interruptible_pool import InterruptiblePool
 import corner
 from distance import test_dist
 from parameters import Params
 from simulator import Simul
 
-from interruptible_pool import InterruptiblePool
 
 def unwrap_self_importance_sampling(arg, **kwarg):
 
     return PmcAbc.importance_sampling(*arg, **kwarg)
 
+
 def unwrap_self_initial_sampling(arg, **kwarg):
 
     return PmcAbc.initial_sampling(*arg, **kwarg)
 
-class PmcAbc(object):
 
-    def __init__(self, data, simulator, prior, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10):
+class PmcAbc(object):
         """ Class taht describes PMC-ABC
         """
+
+    def __init__(self, data, simulator, prior, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10):
         self.data = data
         self.simulator = simulator
         self.prior = prior
+        self.n_params = prior.n_params
         self.N = N
         self.eps0 = eps0
         self.T = T
         self.Nthreads = Nthreads
 
-    def prior_param(self,
-            param_dict= {
-                    'sigma': {'shape': 'uniform', 'min': 0.1, 'max': 0.4},
-                    'm_min': { 'shape': 'uniform', 'min': 11.0, 'max': 13.0}
-                    }):
-        """ Pass priors of parameters in theta
-        """
-
-        self.param_obj = Params(param_dict)     # parameter object
-
-        self.param_names = param_dict.keys()
-
-        self.n_params = len(param_dict.keys())  # number of parameters in theta
 
     def priors_sample(self):
         """ Sample from priors derived from parameter object
@@ -62,7 +46,7 @@ class PmcAbc(object):
 
         for i in xrange(self.n_params):
             np.random.seed()
-            theta_star[i] = self.param_obj.prior()[i].rvs(size=1)[0]
+            theta_star[i] = self.prior.prior()[i].rvs(size=1)[0]
 
         return theta_star
 
@@ -71,13 +55,14 @@ class PmcAbc(object):
         """ Multiply priors of multile dimensions
         p(theta) = p(theta_0) * p(theta_1) * ... * p(theta_n_params)
         """
-        for i in xrange(self.n_params):
+        for i in xrange(self.prior.n_params):
             try:
-                p_theta *= self.param_obj.prior()[i].pdf(tt[i])
+                p_theta *= self.prior.prior()[i].pdf(tt[i])
             except UnboundLocalError:
-                p_theta = self.param_obj.prior()[i].pdf(tt[i])
+                p_theta = self.prior.prior()[i].pdf(tt[i])
 
         return p_theta
+
 
     def initial_sampling(self, params):
         """Wrapper for parallelized initial pool sampling
@@ -106,11 +91,12 @@ class PmcAbc(object):
 
 	return np.array(data_list)
 
+
     def initial_pool(self):
         """
         Creating the initial pool
         """
-        self.prior_param()  # first run prior parameters
+#         self.prior_param()  # first run prior parameters
 
         self.t = 0
         self.theta_t = np.zeros((self.n_params, self.N))
@@ -137,6 +123,7 @@ class PmcAbc(object):
         self.plotout()
 
         return np.array(self.rhos)
+
 
     def importance_sampling(self, params):
         """ Wrapper for parallelized importance sampling
@@ -175,6 +162,7 @@ class PmcAbc(object):
         data_list.append(rho)
 
         return  np.array(data_list)
+
 
     def pmc_abc(self):
         """
@@ -215,6 +203,7 @@ class PmcAbc(object):
 
         return None
 
+
     def writeout(self):
         """ Write out theta_t and w_t
         """
@@ -233,6 +222,7 @@ class PmcAbc(object):
                 )
 
         return None
+
 
     def plotout(self, plot_type = 'scatter'):
         """ Triangle plot the things
@@ -276,6 +266,7 @@ class PmcAbc(object):
             figure.savefig("scatter_theta_t"+str(self.t)+".png")
             plt.close()
 
+
 def weighted_sampling(theta, w):
     """ Weighted sampling
     """
@@ -289,22 +280,3 @@ def weighted_sampling(theta, w):
     closest_theta = theta[:,cdf_closest_index]
 
     return closest_theta
-
-if __name__=='__main__':
-    # fake data
-    #data_x = uniform( -1.0, 2.0).rvs(size=1000)
-    #data_y = norm(0.0, 1.0).pdf(data_x)
-    #data = {'input': data_x, 'output': data_y}
-
-    #fig = plt.figure(1)
-    #sub = fig.add_subplot(111)
-    #sub.scatter(data_x, data_y)
-    #fig.savefig('data.png')
-    #plt.close()
-    data = {'output': 0.0047808 }
-
-    modeel = Simul()
-    simz = modeel.nz
-
-    pmcabc_test = PmcAbc(data, N=100, eps0 = 0.001, T = 10, Nthreads=3)
-    pmcabc_test.pmc_abc()
