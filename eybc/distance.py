@@ -10,7 +10,7 @@ import warnings
 def test_dist( 
         data, 
         model, 
-        disttype = 'halotool_nz'
+        disttype = 'halotool_sum_stat'
         ): 
     ''' Calculate distance between data set D and D_s from model 
 
@@ -38,6 +38,16 @@ def test_dist(
     elif disttype == 'halotool_nz': 
         data_out = data['output']
         dist = np.abs(data_out - model)
+<<<<<<< HEAD:abc/distance.py
+=======
+
+    elif disttype == 'halotool_sum_stat': 
+        data_out = data['output']
+        dist_nz = np.abs(data_out[0] - model[0])/model[0]
+        dist_corr = np.abs(data_out[1] - model[1])/model[1]
+
+        dist = dist_nz + dist_corr
+>>>>>>> 20e172ad26c43b1397206341941735dd6a9129eb:eybc/distance.py
 
     return dist
 

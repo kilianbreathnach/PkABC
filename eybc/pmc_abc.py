@@ -10,8 +10,10 @@ from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.stats import multivariate_normal
 import time 
+import warnings
+import seaborn as sns
 
-import triangle
+import corner 
 from distance import test_dist
 from parameters import Params
 from simulator import Simul
@@ -28,7 +30,12 @@ def unwrap_self_initial_sampling(arg, **kwarg):
 
 class PmcAbc(object): 
     
-    def __init__(self, data, N = 1000, eps0 = 0.01, T = 20, Nthreads = 10): 
+    def __init__(self, data, simulator, 
+            prior_dict = {}, 
+            N = 1000, 
+            eps0 = 0.01, 
+            T = 20, 
+            Nthreads = 10): 
         """ Class taht describes PMC-ABC 
         """
         self.data = data
@@ -37,14 +44,28 @@ class PmcAbc(object):
         self.T = T
         self.Nthreads = Nthreads
 
+<<<<<<< HEAD:abc/pmc_abc.py
     def prior_param(self, 
             param_dict= {
                     'sigma': {'shape': 'uniform', 'min': 0.1, 'max': 0.4}, 
                     'm_min': { 'shape': 'uniform', 'min': 11.0, 'max': 13.0}
-                    }): 
+		               
+                   , 'alpha': { 'shape': 'uniform', 'min': 1.059, 'max': 1.061}
+
+                   , 'm0': { 'shape': 'uniform', 'min': 11.37, 'max': 11.39}
+                   , 'm1': { 'shape': 'uniform', 'min': 13.30, 'max': 13.32}
+         }): 
+=======
+        # simulator function has to be a function of theta_star
+        self.simz = simulator
+        
+        self.prior_param(param_dict = prior_dict)  # first run prior parameters
+
+
+    def prior_param(self, param_dict={}): 
+>>>>>>> 20e172ad26c43b1397206341941735dd6a9129eb:eybc/pmc_abc.py
         """ Pass priors of parameters in theta
         """
-
         self.param_obj = Params(param_dict)     # parameter object
 
         self.param_names = param_dict.keys()
@@ -57,7 +78,8 @@ class PmcAbc(object):
         
         theta_star = np.zeros(self.n_params)
 
-        for i in xrange(self.n_params): 
+        for i in xrange(self.n_params):
+            #print 1 
             np.random.seed()
             theta_star[i] = self.param_obj.prior()[i].rvs(size=1)[0]
 
@@ -66,7 +88,7 @@ class PmcAbc(object):
     
     def prior_of_priors(self, tt): 
         """ Multiply priors of multile dimensions
-        p(theta) = p(theta_0) * p(theta_1) * ... * p(theta_n_params)
+        p(theta) = p(theta_0) * p(theta_1) * ... * p(theta_n_params
         """
         for i in xrange(self.n_params): 
             try: 
@@ -82,19 +104,19 @@ class PmcAbc(object):
         i = params
         
         theta_star = self.priors_sample()
-        model = simz( theta_star )
+        model = self.simz( theta_star )
         rho = test_dist(self.data, model)
-
+        print rho  
         while rho > self.eps0: 
 
             theta_star = self.priors_sample()
                 
-            model = simz( theta_star )
+            model = self.simz( theta_star )
 
             rho = test_dist(self.data, model)
-        
+            #print 1 
         data_list = [np.int(i)]
-
+        print "done"
         for i_param in xrange(self.n_params): 
             data_list.append(theta_star[i_param])
 
@@ -107,12 +129,11 @@ class PmcAbc(object):
         """
         Creating the initial pool
         """
-        self.prior_param()  # first run prior parameters
-
         self.t = 0 
         self.theta_t = np.zeros((self.n_params, self.N))
         self.w_t = np.zeros((self.N))
         self.rhos = np.zeros((self.N)) 
+
     
         pool = InterruptiblePool(self.Nthreads)    
         mapfn = pool.map
@@ -145,18 +166,18 @@ class PmcAbc(object):
         np.random.seed()
         theta_starstar = multivariate_normal( theta_star, self.sig_t_1 ).rvs(size=1)
        
-        model_starstar = simz( theta_starstar )
+        model_starstar = self.simz( theta_starstar )
 
-        rho = test_dist(data, model_starstar) 
+        rho = test_dist(self.data, model_starstar) 
     
         while rho > self.eps_t: 
 
             theta_star = weighted_sampling( self.theta_t_1, self.w_t_1 )
             theta_starstar = multivariate_normal(theta_star, self.sig_t_1).rvs(size=1)
 
-            model_starstar = simz( theta_starstar )
+            model_starstar = self.simz( theta_starstar )
 
-            rho = test_dist(data, model_starstar) 
+            rho = test_dist(self.data, model_starstar) 
 
         #print theta_star, theta_starstar
 
@@ -193,6 +214,7 @@ class PmcAbc(object):
             mapfn = pool.map
             args_list = [ i for i in xrange(self.N) ] 
             results = mapfn(unwrap_self_importance_sampling, zip([self]*len(args_list), args_list))
+
             pool.close()
             pool.terminate()
             pool.join()
@@ -215,7 +237,7 @@ class PmcAbc(object):
         """ Write out theta_t and w_t
         """
 
-        out_file = ''.join(['theta_w_t', str(self.t), '.dat'])
+        out_file = ''.join(['teta_w_t', str(self.t), '.dat'])
 
         data_list = [] 
         for i in xrange(self.n_params): 
@@ -230,11 +252,33 @@ class PmcAbc(object):
 
         return None 
 
+<<<<<<< HEAD:abc/pmc_abc.py
     def plotout(self, plot_type = 'triangle'): 
         """ Triangle plot the things 
         """
         print self.theta_t.T.shape
         if plot_type == 'triangle': 
+=======
+    def plotout(self, plot_type = 'seabreeze'): 
+        """ Triangle plot the things 
+        """
+        if plot_type == 'seabreeze':
+
+            figure = sns.jointplot(x = self.theta_t[0,:], y = self.theta_t[1,:], kind = 'kde', 
+                    style = 'white', weights = self.w_t, 
+                    xlim = [-1.0, 1], 
+                    ylim = [0.0, 2.0]
+                    )
+            
+            plt.savefig("seabreeze_theta_t"+str(self.t)+".png")
+            plt.close()
+
+        elif plot_type == 'triangle': 
+            # Clunky based on which version of corner.py you have
+            # Clunky based on which version of corner.py you have
+            # Clunky based on which version of corner.py you have
+            # Clunky based on which version of corner.py you have
+>>>>>>> 20e172ad26c43b1397206341941735dd6a9129eb:eybc/pmc_abc.py
             figure = triangle.corner(
                    (self.theta_t).T, 
                    labels = self.param_names, 
@@ -242,37 +286,26 @@ class PmcAbc(object):
                    show_titles=False,
                    range = [[11., 13.] , [.1 , .4]], 
                    title_args={"fontsize": 12},
-                   smooth=False
-                   ) 
-        
-            figure.gca().annotate( 
-                    textcoords="offset points",
-                    ha="center", 
-                    va="top"
-                    ) 
+                   smooth=False, 
+                   color = "k",
+                   scale_hist=False
+                   )
             figure.savefig("triangle_theta_t"+str(self.t)+".png")
             plt.close()
 
         elif plot_type == 'scatter': 
+            
+            if len(self.theta_t[:,0]) != 2: 
+                warnings.warn("Can only plot two axes on scatter plot. No plot generated")
+                return 
 
-            figure = triangle.corner(
-                   (self.theta_t).T, 
-                   labels = self.param_names, 
-                   weights = self.w_t, 
-                   show_titles=True, 
-                   title_args={"fontsize": 12}
-                   ) 
-        
-            figure.gca().annotate(
-                    str(self.t), 
-                    xy=(0.5, 1.0), 
-                    xycoords="figure fraction",
-                    xytext=(0, -5), 
-                    textcoords="offset points",
-                    ha="center", 
-                    va="top"
-                    ) 
-            figure.savefig("triangle_theta_t"+str(self.t)+".png")
+            figure = plt.figure(1)
+            sub = figure.add_subplot(111)
+            sub.scatter(self.theta_t[0,:], self.theta_t[1,:]) 
+            sub.set_xlim([-1.0, 1.0])
+            sub.set_ylim([0.8, 1.5])
+            
+            figure.savefig("scatter_theta_t"+str(self.t)+".png")
             plt.close()
 
 def weighted_sampling(theta, w): 
@@ -290,20 +323,30 @@ def weighted_sampling(theta, w):
     return closest_theta 
 
 if __name__=='__main__': 
+    pass
     # fake data
     #data_x = uniform( -1.0, 2.0).rvs(size=1000)
     #data_y = norm(0.0, 1.0).pdf(data_x)
     #data = {'input': data_x, 'output': data_y}
 
-    #fig = plt.figure(1)
-    #sub = fig.add_subplot(111)
-    #sub.scatter(data_x, data_y)
-    #fig.savefig('data.png')
-    #plt.close()
-    data = {'output': 0.0047808 }
-        
-    modeel = Simul()
-    simz = modeel.nz
+    ##fig = plt.figure(1)
+    ##sub = fig.add_subplot(111)
+    ##sub.scatter(data_x, data_y)
+    ##fig.savefig('data.png')
+    plt.close()
+    data = {'output': [0.0047808, 6.76599366e+02]}
 
-    pmcabc_test = PmcAbc(data, N=100, eps0 = 0.004, T = 20, Nthreads=20)
+<<<<<<< HEAD:abc/pmc_abc.py
+    pmcabc_test = PmcAbc(data, N=10, eps0 = 0.1, T = 20, Nthreads=20)
+=======
+    modeel = Simul()
+    simz = modeel.sum_stat
+
+    pmcabc_test = PmcAbc(data, simz, 
+            prior_dict = {
+                'logMmin': {'shape': 'uniform', 'min': 11.5, 'max': 12.5}, 
+                'sigma_logM': {'shape': 'uniform', 'min': 0.2, 'max': 0.3}
+                }, 
+            N=100, eps0 = 0.5, T = 10, Nthreads=3)
+>>>>>>> 20e172ad26c43b1397206341941735dd6a9129eb:eybc/pmc_abc.py
     pmcabc_test.pmc_abc()

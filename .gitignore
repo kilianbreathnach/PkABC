@@ -2,3 +2,5 @@
 *.sw*
 *.pdf
 *.pyc
+*.dat
+*.png
