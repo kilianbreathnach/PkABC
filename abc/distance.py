@@ -10,7 +10,7 @@ import warnings
 def test_dist( 
         data, 
         model, 
-        disttype = 'halotool_nz'
+        disttype = 'dumb'
         ): 
     ''' Calculate distance between data set D and D_s from model 
 
