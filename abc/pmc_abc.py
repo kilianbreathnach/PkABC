@@ -10,6 +10,7 @@ from scipy.stats import uniform
 from scipy.stats import norm
 from scipy.stats import multivariate_normal
 import time 
+import warning
 
 import corner 
 from distance import test_dist
@@ -256,7 +257,11 @@ class PmcAbc(object):
             plt.close()
 
         elif plot_type == 'scatter': 
-    
+            
+            if len(self.theta_i[:,0]) != 2: 
+                warnings.warn("Can only plot two axes on scatter plot. No plot generated")
+                return 
+
             figure = plt.figure(1)
             sub = figure.add_subplot(111)
             sub.scatter(self.theta_t[0,:], self.theta_t[1,:]) 
