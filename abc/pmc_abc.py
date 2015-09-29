@@ -194,6 +194,7 @@ class PmcAbc(object):
             mapfn = pool.map
             args_list = [ i for i in xrange(self.N) ] 
             results = mapfn(unwrap_self_importance_sampling, zip([self]*len(args_list), args_list))
+
             pool.close()
             pool.terminate()
             pool.join()
@@ -235,6 +236,10 @@ class PmcAbc(object):
         """ Triangle plot the things 
         """
         if plot_type == 'triangle': 
+            # Clunky based on which version of corner.py you have
+            # Clunky based on which version of corner.py you have
+            # Clunky based on which version of corner.py you have
+            # Clunky based on which version of corner.py you have
             figure = triangle.corner(
                    (self.theta_t).T, 
                    labels = self.param_names, 
@@ -266,26 +271,7 @@ class PmcAbc(object):
             sub = figure.add_subplot(111)
             sub.scatter(self.theta_t[0,:], self.theta_t[1,:]) 
 
-            """
-            figure = corner(
-                   (self.theta_t).T, 
-                   labels = self.param_names, 
-                   weights = self.w_t, 
-                   show_titles=True, 
-                   title_args={"fontsize": 12}
-                   ) 
-        
-            figure.gca().annotate(
-                    str(self.t), 
-                    xy=(0.5, 1.0), 
-                    xycoords="figure fraction",
-                    xytext=(0, -5), 
-                    textcoords="offset points",
-                    ha="center", 
-                    va="top"
-                    ) 
-            """
-            figure.savefig("triangle_theta_t"+str(self.t)+".png")
+            figure.savefig("scatter_theta_t"+str(self.t)+".png")
             plt.close()
 
 def weighted_sampling(theta, w): 

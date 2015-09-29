@@ -7,7 +7,6 @@ Simulator for PMC_ABC
 
 from halotools.empirical_models import Zheng07
 
-
 class Simul(object): 
 
     def __init__(self): 
