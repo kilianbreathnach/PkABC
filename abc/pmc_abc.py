@@ -41,7 +41,12 @@ class PmcAbc(object):
             param_dict= {
                     'sigma': {'shape': 'uniform', 'min': 0.1, 'max': 0.4}, 
                     'm_min': { 'shape': 'uniform', 'min': 11.0, 'max': 13.0}
-                    }): 
+		               
+                   , 'alpha': { 'shape': 'uniform', 'min': 1.059, 'max': 1.061}
+
+                   , 'm0': { 'shape': 'uniform', 'min': 11.37, 'max': 11.39}
+                   , 'm1': { 'shape': 'uniform', 'min': 13.30, 'max': 13.32}
+         }): 
         """ Pass priors of parameters in theta
         """
 
@@ -57,7 +62,8 @@ class PmcAbc(object):
         
         theta_star = np.zeros(self.n_params)
 
-        for i in xrange(self.n_params): 
+        for i in xrange(self.n_params):
+            #print 1 
             np.random.seed()
             theta_star[i] = self.param_obj.prior()[i].rvs(size=1)[0]
 
@@ -66,7 +72,7 @@ class PmcAbc(object):
     
     def prior_of_priors(self, tt): 
         """ Multiply priors of multile dimensions
-        p(theta) = p(theta_0) * p(theta_1) * ... * p(theta_n_params)
+        p(theta) = p(theta_0) * p(theta_1) * ... * p(theta_n_params
         """
         for i in xrange(self.n_params): 
             try: 
@@ -84,7 +90,7 @@ class PmcAbc(object):
         theta_star = self.priors_sample()
         model = simz( theta_star )
         rho = test_dist(self.data, model)
-
+        print rho  
         while rho > self.eps0: 
 
             theta_star = self.priors_sample()
@@ -92,9 +98,9 @@ class PmcAbc(object):
             model = simz( theta_star )
 
             rho = test_dist(self.data, model)
-        
+            #print 1 
         data_list = [np.int(i)]
-
+        print "done"
         for i_param in xrange(self.n_params): 
             data_list.append(theta_star[i_param])
 
@@ -215,7 +221,7 @@ class PmcAbc(object):
         """ Write out theta_t and w_t
         """
 
-        out_file = ''.join(['theta_w_t', str(self.t), '.dat'])
+        out_file = ''.join(['teta_w_t', str(self.t), '.dat'])
 
         data_list = [] 
         for i in xrange(self.n_params): 
@@ -230,28 +236,22 @@ class PmcAbc(object):
 
         return None 
 
-    def plotout(self, plot_type = 'scatter'): 
+    def plotout(self, plot_type = 'triangle'): 
         """ Triangle plot the things 
         """
+        print self.theta_t.T.shape
         if plot_type == 'triangle': 
             figure = triangle.corner(
                    (self.theta_t).T, 
                    labels = self.param_names, 
                    weights = self.w_t, 
-                   show_titles=True, 
+                   show_titles=False,
+                   range = [[11., 13.] , [.1 , .4]], 
                    title_args={"fontsize": 12},
-                   smooth=False
-                   ) 
-        
-            figure.gca().annotate(
-                    str(self.t), 
-                    xy=(0.5, 1.0), 
-                    xycoords="figure fraction",
-                    xytext=(0, -5), 
-                    textcoords="offset points",
-                    ha="center", 
-                    va="top"
-                    ) 
+                   smooth=False, 
+                   color = "k",
+                   scale_hist=False
+                   )
             figure.savefig("triangle_theta_t"+str(self.t)+".png")
             plt.close()
 
@@ -307,5 +307,5 @@ if __name__=='__main__':
     modeel = Simul()
     simz = modeel.nz
 
-    pmcabc_test = PmcAbc(data, N=100, eps0 = 0.005, T = 10, Nthreads=3)
+    pmcabc_test = PmcAbc(data, N=10, eps0 = 0.1, T = 20, Nthreads=20)
     pmcabc_test.pmc_abc()
