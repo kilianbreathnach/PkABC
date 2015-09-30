@@ -24,8 +24,6 @@ from parameters import Params
 from simulator import Simul
 from interruptible_pool import InterruptiblePool
 
-
-
 def unwrap_self_importance_sampling(arg, **kwarg):
     return PmcAbc.importance_sampling(*arg, **kwarg)
 
@@ -95,26 +93,19 @@ class PmcAbc(object):
 
         """
         i = params
-	print i
         theta_star = self.priors_sample()
-        print theta_star
         model = self.simz( theta_star )
-        print model
         rho = test_dist(self.data, model)
-	print rho
         while rho > self.eps0: 
             theta_star = self.priors_sample()
             model = self.simz( theta_star )
             rho = test_dist(self.data, model)
-        print "happy"
         data_list = [np.int(i)]
 
         for i_param in xrange(self.n_params): 
             data_list.append(theta_star[i_param])
-        print "sad"
         data_list.append(1./np.float(self.N))
         data_list.append(rho)
-        print "not too sad" , np.array(data_list)
 	return np.array(data_list)   
 
     def initial_pool(self):
@@ -125,15 +116,19 @@ class PmcAbc(object):
         self.theta_t = np.zeros((self.n_params, self.N))
         self.w_t = np.zeros((self.N))
         self.rhos = np.zeros((self.N)) 
-        print "misery"
-        pool = InterruptiblePool(self.Nthreads)    
-        mapfn = pool.map
+
+        #pool = InterruptiblePool(self.Nthreads)    
+        #mapfn = pool.map
         args_list = [(i) for i in xrange(self.N)]
-        unwrap_self_initial_sampling(zip([self]*len(args_list), args_list)[0])
-        results = mapfn(unwrap_self_initial_sampling, zip([self]*len(args_list), args_list))
-        pool.close()
-        pool.terminate()
-        pool.join()
+        results = [] 
+        for arg in args_list: 
+            results.append(self.initial_sampling(arg))
+        #unwrap_self_initial_sampling(zip([self]*len(args_list), args_list)[0])
+        #results = mapfn(unwrap_self_initial_sampling, zip([self]*len(args_list), args_list))
+        #pool.close()
+        #pool.terminate()
+        #pool.join()
+        print 'Initial Pool Complete'
 
  	pars = np.array(results).T
         self.theta_t = pars[1:self.n_params+1,:]
