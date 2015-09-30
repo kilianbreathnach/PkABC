@@ -95,24 +95,26 @@ class PmcAbc(object):
 
         """
         i = params
-
+	print i
         theta_star = self.priors_sample()
+        print theta_star
         model = self.simz( theta_star )
+        print model
         rho = test_dist(self.data, model)
-
+	print rho
         while rho > self.eps0: 
             theta_star = self.priors_sample()
             model = self.simz( theta_star )
             rho = test_dist(self.data, model)
-
+        print "happy"
         data_list = [np.int(i)]
 
         for i_param in xrange(self.n_params): 
             data_list.append(theta_star[i_param])
-
+        print "sad"
         data_list.append(1./np.float(self.N))
         data_list.append(rho)
-
+        print "not too sad" , np.array(data_list)
 	return np.array(data_list)   
 
     def initial_pool(self):
@@ -123,7 +125,7 @@ class PmcAbc(object):
         self.theta_t = np.zeros((self.n_params, self.N))
         self.w_t = np.zeros((self.N))
         self.rhos = np.zeros((self.N)) 
-
+        print "misery"
         pool = InterruptiblePool(self.Nthreads)    
         mapfn = pool.map
         args_list = [(i) for i in xrange(self.N)]
@@ -322,16 +324,17 @@ if __name__=='__main__':
     ##sub.scatter(data_x, data_y)
     ##fig.savefig('data.png')
     #plt.close()
-    data = {'output': [0.0047808, 6.76599366e+02]}
+    #data = {'output': [0.0047808, 6.76599366e+02]}
 
+    data = {'output': [0.0047808]}
     modeel = Simul()
     simz = modeel.sum_stat
-
+    print simz([12 , .2])
     pmcabc_test = PmcAbc(data, simz, 
             prior_dict = {
                 'logMmin': {'shape': 'uniform', 'min': 11.5, 'max': 12.5}, 
                 'sigma_logM': {'shape': 'uniform', 'min': 0.2, 'max': 0.3}
                 }, 
-            N=100, eps0 = 0.5, T = 10, Nthreads=3)
+            N=5, eps0 = 1., T = 10, Nthreads=1)
 
     pmcabc_test.pmc_abc()

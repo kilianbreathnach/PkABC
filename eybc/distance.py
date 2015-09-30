@@ -31,7 +31,7 @@ def test_dist(
 
     elif disttype == 'halotool_nz': 
         data_out = data['output']
-        dist = np.abs(data_out - model)
+        dist = np.abs(data_out[0] - model[0])
 
     elif disttype == 'halotool_sum_stat': 
         data_out = data['output']

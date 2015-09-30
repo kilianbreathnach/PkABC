@@ -37,11 +37,11 @@ class Simul(object):
 
         self.model.populate_mock()
 
-        r, xi = self.model.compute_galaxy_clustering()
-    
+        #r, xi = self.model.compute_galaxy_clustering()
+        #print "xi"
         # number density of mock catalog
         nz = self.model.mock.number_density
         # magnitude of the correlation function 
-        corr_mag = xi[1]
+        #corr_mag = xi[1]
 
-        return [nz, corr_mag]
+        return [nz , 10000.]#[nz, corr_mag]
