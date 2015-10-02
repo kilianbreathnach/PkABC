@@ -16,6 +16,6 @@ if __name__=="__main__":
                 'mu': {'shape': 'uniform', 'min': -0.5, 'max': 0.5}, 
                 'sigma': {'shape': 'uniform', 'min': 0.5, 'max': 1.5}
                 }, 
-            N=100, eps0 = 0.5, T = 10, Nthreads=3)
+            N=5, eps0 = 0.5, T = 1, Nthreads=3)
 
     pmcabc_test.pmc_abc()

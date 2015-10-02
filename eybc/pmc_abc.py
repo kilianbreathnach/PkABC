@@ -121,7 +121,8 @@ class PmcAbc(object):
         #mapfn = pool.map
         args_list = [(i) for i in xrange(self.N)]
         results = [] 
-        for arg in args_list: 
+        for arg in args_list:
+            print self.initial_sampling(arg) 
             results.append(self.initial_sampling(arg))
         #unwrap_self_initial_sampling(zip([self]*len(args_list), args_list)[0])
         #results = mapfn(unwrap_self_initial_sampling, zip([self]*len(args_list), args_list))
@@ -330,6 +331,6 @@ if __name__=='__main__':
                 'logMmin': {'shape': 'uniform', 'min': 11.5, 'max': 12.5}, 
                 'sigma_logM': {'shape': 'uniform', 'min': 0.2, 'max': 0.3}
                 }, 
-            N=5, eps0 = 1., T = 10, Nthreads=1)
+            N=10, eps0 = .1, T = 10, Nthreads=2)
 
     pmcabc_test.pmc_abc()
