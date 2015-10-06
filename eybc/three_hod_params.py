@@ -39,6 +39,8 @@ avg_xi /=np.float(n_avg)
 data = [avg_nz, avg_xi]
 data_hod = np.array([1.15 , 0.39, 12.79])
 
+"""simulator"""
+
 class HODsim(object): 
     
     def __init__(self): 
@@ -67,6 +69,7 @@ class HODsim(object):
 ourmodel = HODsim()
 simz = ourmodel.sum_stat
 
+"""distance"""
 
 def distance(d_data, d_model, type = 'sum_stat'): 
     
@@ -78,6 +81,29 @@ def distance(d_data, d_model, type = 'sum_stat'):
         
     return dist 
 
+"""covariance matrix in abc sampler"""
+
+def covariance(theta , w , type = 'neutral'):
+
+    if type == 'neutral':
+
+      return np.cov(theta)
+
+    if type == 'normalized neutral':
+
+      return np.corrcoef(theta)
+
+    if type == 'weighted':
+
+      mean = np.ma.average(theta, axis=0, weights = w)
+      tmm  = theta - mean
+      sigma2 = 1./(w.sum) * (tmm*w[:,None]).T.dot(tmm)
+      return sigma2  
+
+
+def KNN_covariance(theta , w):
+
+    return np.cov(theta)
 
 """Prior"""
 
@@ -174,8 +200,8 @@ def plot_thetas(theta , w , t):
 
 
 N_threads = 10 
-N_particles = 500 
-N_iter = 50
+N_particles = 50 
+N_iter = 2
 eps0 = 20.0
 
 def initial_pool_sampling(i_particle): 
@@ -220,7 +246,7 @@ def initial_pool():
     theta_t = results[1:n_params+1,:]
     w_t = results[n_params+1,:]
     rhos = results[n_params+2,:]
-    sig_t = np.cov(theta_t)
+    sig_t = covariance(theta_t , w_t)
     
     return theta_t, w_t, rhos, sig_t
 
@@ -328,13 +354,12 @@ def pmc_abc(N_threads = N_threads):
         pool.terminate()
         pool.join()
         
-        sig_t = np.cov(theta_t)
                  
         results = np.array(results).T
         theta_t = results[1:n_params+1,:]
         w_t = results[n_params+1,:]
         rhos = results[n_params+2,:]
-        sig_t = np.cov(theta_t)
+        sig_t = covariance(theta_t , w_t)
         
         t += 1
         
