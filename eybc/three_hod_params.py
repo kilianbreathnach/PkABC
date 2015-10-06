@@ -71,11 +71,17 @@ simz = ourmodel.sum_stat
 
 """distance"""
 
-def distance(d_data, d_model, type = 'sum_stat'): 
+def distance(d_data, d_model, type = 'sum_stat_L2'): 
     
-    if type == 'sum_stat': 
+    if type == 'sum_stat_L1': 
         dist_nz = np.abs(d_data[0] - d_model[0])/d_data[0]
         dist_xi = np.sum(np.abs(d_data[1] - d_model[1])/d_data[1])
+        
+        dist = dist_nz + dist_xi 
+    elif type == 'sum_stat_L2':
+        
+        dist_nz = (d_data[0] - d_model[0])**2./d_data[0]**2.
+        dist_xi = np.sum((d_data[1] - d_model[1])**2./d_data[1]**2.)
         
         dist = dist_nz + dist_xi 
         
@@ -188,11 +194,11 @@ def plot_thetas(theta , w , t):
         labels=[r"$\alpha$", r"$\sigma$", r"$\log M_{min}$" ]
         )
     
-    plt.savefig("/home/mj/public_html/weighted_scatter_hod3_flat_t"+str(t)+".png")
+    plt.savefig("/home/mj/public_html/weighted_l2_scatter_hod3_flat_t"+str(t)+".png")
     plt.close()
-    np.savetxt("/home/mj/public_html/weighted_theta_hod3_flat_t"+str(t)+".dat" , theta.T)
+    np.savetxt("/home/mj/public_html/weighted_l2_theta_hod3_flat_t"+str(t)+".dat" , theta.T)
     
-    np.savetxt("/home/mj/public_html/weighted_w_hod3_flat_t"+str(t)+".dat" , w.T)
+    np.savetxt("/home/mj/public_html/weighted_l2_w_hod3_flat_t"+str(t)+".dat" , w.T)
 
 #plot_datapoints=True, fill_contours=True, levels=[0.68, 0.95], 
 #                color='b', bins=80, smooth=1.0
