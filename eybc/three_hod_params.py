@@ -83,7 +83,7 @@ def distance(d_data, d_model, type = 'sum_stat'):
 
 """covariance matrix in abc sampler"""
 
-def covariance(theta , w , type = 'neutral'):
+def covariance(theta , w , type = 'weighted'):
 
     if type == 'neutral':
 
@@ -94,10 +94,9 @@ def covariance(theta , w , type = 'neutral'):
       return np.corrcoef(theta)
 
     if type == 'weighted':
-
-      mean = np.ma.average(theta, axis=0, weights = w)
-      tmm  = theta - mean
-      sigma2 = 1./(w.sum) * (tmm*w[:,None]).T.dot(tmm)
+      mean = np.sum(theta*w[None,:] , axis = 1)/ np.sum(w)
+      tmm  = theta - mean.reshape(theta.shape[0] , 1)
+      sigma2 = 1./(w.sum()) * (tmm*w[None,:]).dot(tmm.T)
       return sigma2  
 
 
@@ -189,19 +188,19 @@ def plot_thetas(theta , w , t):
         labels=[r"$\alpha$", r"$\sigma$", r"$\log M_{min}$" ]
         )
     
-    plt.savefig("/home/mj/public_html/scatter_hod3_flat_t"+str(t)+".png")
+    plt.savefig("/home/mj/public_html/weighted_scatter_hod3_flat_t"+str(t)+".png")
     plt.close()
-    np.savetxt("/home/mj/public_html/theta_hod3_flat_t"+str(t)+".dat" , theta.T)
+    np.savetxt("/home/mj/public_html/weighted_theta_hod3_flat_t"+str(t)+".dat" , theta.T)
     
-    np.savetxt("/home/mj/public_html/w_hod3_flat_t"+str(t)+".dat" , w.T)
+    np.savetxt("/home/mj/public_html/weighted_w_hod3_flat_t"+str(t)+".dat" , w.T)
 
 #plot_datapoints=True, fill_contours=True, levels=[0.68, 0.95], 
 #                color='b', bins=80, smooth=1.0
 
 
-N_threads = 10 
-N_particles = 50 
-N_iter = 2
+N_threads = 20 
+N_particles = 100 
+N_iter = 30
 eps0 = 20.0
 
 def initial_pool_sampling(i_particle): 
