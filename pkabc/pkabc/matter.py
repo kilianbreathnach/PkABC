@@ -247,7 +247,7 @@ class Matter(Universe):
         C = 0.019 + 0.107 * y + 0.19 * ey4
         c = 2.4
 
-        bias = 1. - (nu ** a)/(nu ** a + self.delta_c(z) ** a) + \
+        bias = 1. - A * ((nu ** a)/(nu ** a + self.delta_c(z) ** a)) + \
 	             B * nu ** b + C * nu ** c
 
         return bias
